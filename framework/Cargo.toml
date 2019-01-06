@@ -39,3 +39,5 @@ sctp = ["rust-sctp"]
 [build-dependencies]
 # Use Bindgen to generate DPDK structures.
 bindgen = "0.31.3"
+# fix lint
+clippy = { version = "*", optional = true }
