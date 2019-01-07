@@ -464,9 +464,10 @@ case $TASK in
     doc)
         deps
         pushd $BASE_DIR/framework
-        ${CARGO} rustdoc -- \
+        ${CARGO} rustdoc  -- \
             --no-defaults --passes "collapse-docs" --passes \
-                "unindent-comments"
+            "unindent-comments" --document-private-items \
+            -Z unstable-options --enable-index-page
         popd
         ;;
     lint)

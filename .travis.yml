@@ -1,27 +1,52 @@
 sudo: required
 language: rust
 rust:
-    - nightly
-dist: trusty
+    - nightly-2019-01-02
+dist: xenial
+notifications:
+  email: false
 matrix:
-    include:
-        - rust: nightly
+  include:
+    - rust: nightly-2019-01-02
+  allow_failures:
+    - rust: nightly
 env:
     - SYSTEM_CARGO=1
 before_install:
-    - sudo apt-get update -qq
-    - sudo apt-get install -qq apt-utils build-essential pciutils linux-headers-`uname -r` python python3  libssl-dev 
-    - sudo apt-get install -qq libgnutls28 libgnutls-dev libcurl4-gnutls-dev cmake bash libpcap-dev libnuma-dev
-    - ./build.sh deps
+  - sudo apt-get update -qq
+  - sudo apt-get install -qq apt-utils build-essential pciutils linux-headers-`uname -r` python python3  libssl-dev
+  - sudo apt-get install -qq libgnutls30 libgnutls-dev libcurl4-gnutls-dev cmake bash libpcap-dev libnuma-dev
+  - ./build.sh deps
 services:
-    - docker
+  - docker
 before_script:
-    - sudo sysctl -w vm.nr_hugepages=256
-    - sudo mkdir -p /mnt/huge
-    - sudo mount -t hugetlbfs nodev /mnt/huge
+  - sudo sysctl -w vm.nr_hugepages=256
+  - sudo mkdir -p /mnt/huge
+  - sudo mount -t hugetlbfs nodev /mnt/huge
 script:
-    - ./build.sh check_examples
-    - ./build.sh fmt_travis 
-    - ./build.sh build_container 
-    - ./build.sh ctr_test
-install: true
+  #- ./build.sh check_examples
+  #- ./build.sh fmt_travis
+  #- ./build.sh build_container
+  #- ./build.sh ctr_test
+  - ./build.sh doc
+install:
+  #- command -v mdbook >/dev/null 2>&1 || cargo install mdbook
+  #- command -v mdbook-linkcheck >/dev/null 2>&1 || cargo install mdbook-linkcheck
+before_deploy:
+  - ./build.sh doc
+  - mkdir public
+  - cp -r target/doc public/
+  - pwd
+  - ls
+  - echo "<meta http-equiv=refresh content=0;url=doc/index.html>" > public/index.html
+deploy:
+  provider: pages
+  skip-cleanup: true
+  github-token: $GITHUB_TOKEN
+  keep-history: false
+  local-dir: public
+  # Workaround for travis-ci/travis-ci#9312
+  #edge:
+  #  branch: pages-ivar-set
+  on:
+    branch: beta
