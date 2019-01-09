@@ -1,3 +1,11 @@
+//! NAT Network Funcion implemented in NetBricks.
+//!
+//! ## Description:
+//! This NF is based on MazuNAT [41] a Click based NAT implemented by Mazu Networks, and commonly
+//! used in academic research.
+//!
+//! For details please refer to the section 5.2.2 of the NetBricks paper.
+
 #![feature(box_syntax)]
 extern crate e2d2;
 extern crate fnv;
@@ -29,13 +37,7 @@ where
 
     let mut pipelines: Vec<_> = ports
         .iter()
-        .map(|port| {
-            nat(
-                ReceiveBatch::new(port.clone()),
-                sched,
-                &Ipv4Addr::new(10, 0, 0, 1),
-            ).send(port.clone())
-        })
+        .map(|port| nat(ReceiveBatch::new(port.clone()), sched, &Ipv4Addr::new(10, 0, 0, 1)).send(port.clone()))
         .collect();
     println!("Running {} pipelines", pipelines.len());
     if pipelines.len() > 1 {

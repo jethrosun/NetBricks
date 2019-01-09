@@ -321,13 +321,24 @@ case $TASK in
             fi
         done
         ;;
-    create_container)
+    ctr_create) # FIXME: create vswtch container????
         clean
         clean_deps
         docker build -f container/Dockerfile -t netbricks:vswitch --build-arg dpdk_file="common_linuxapp-${DPDK_VER}.vswitch" ${BASE_DIR}
         echo "Done building container as netbricks:vswitch"
         ;;
-    ctr_dpdk)
+    ctr_update) # update the docker image
+        docker build --no-cache -f ${BASE_DIR}/build-container/Dockerfile -t jethrosun/netbricks-build:latest \
+            ${BASE_DIR}/build-container
+        docker push jethrosun/netbricks-build:latest
+        ;;
+    ctr_build) # build the container from the image
+        docker pull jethrosun/netbricks-build:latest
+        docker run -t -v /lib/modules:/lib/modules \
+            -v /usr/src:/usr/src -v ${BASE_DIR}:/opt/netbricks \
+             jethrosun/netbricks-build:latest /opt/netbricks/build.sh _build_container
+        ;;
+    ctr_dpdk) # FIXME ???
         shift
         if [ $# -lt 1 ]; then
             echo "build.sh ctr_dpdk dir"
@@ -343,18 +354,24 @@ case $TASK in
         export DPDK_CONFIG_FILE="${EXT_BASE}/dpdk-confs/common_linuxapp-${DPDK_VER}.container"
         PATH="$HOME/.cargo/bin:$PATH" ${BASE_DIR}/build.sh build
         ;;
-    build_container)
+    create_container) # DEPRECATED
+        clean
+        clean_deps
+        docker build -f container/Dockerfile -t netbricks:vswitch --build-arg dpdk_file="common_linuxapp-${DPDK_VER}.vswitch" ${BASE_DIR}
+        echo "Done building container as netbricks:vswitch"
+        ;;
+    build_container_apanda) # DEPRECATED
         docker pull apanda/netbricks-build:latest
         docker run -t -v /lib/modules:/lib/modules \
             -v /usr/src:/usr/src -v ${BASE_DIR}:/opt/netbricks \
              apanda/netbricks-build:latest /opt/netbricks/build.sh _build_container
         ;;
-    update_container)
+    update_container_apanda) # DEPRECATED
         docker build --no-cache -f ${BASE_DIR}/build-container/Dockerfile -t apanda/netbricks-build:latest \
             ${BASE_DIR}/build-container
         docker push apanda/netbricks-build:latest
         ;;
-    ctr_test)
+    ctr_test_apanda) # DEPRECATED
         docker pull apanda/netbricks-build:latest
         docker run -t -v /lib/modules:/lib/modules \
             -v /lib/modules/`uname -r`/build:/lib/modules/`uname -r`/build -v ${BASE_DIR}:/opt/netbricks \
@@ -461,7 +478,7 @@ case $TASK in
     check_examples)
         python3 scripts/check-examples.py "${examples[@]}"
         ;;
-    doc)
+    doc) # DEPRECATED
         deps
         pushd $BASE_DIR/framework
         ${CARGO} rustdoc  -- \
