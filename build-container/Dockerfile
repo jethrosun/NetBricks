@@ -1,5 +1,6 @@
 FROM ubuntu:artful
-MAINTAINER "Aurojit Panda <apanda@cs.berkeley.edu>"
+#MAINTAINER "Aurojit Panda <apanda@cs.berkeley.edu>"
+MAINTAINER "Jethro Shuwen Sun <jethrosun@ccs.neu.edu>"
 RUN apt-get -yq update && apt-get -yq install apt-utils
 RUN apt-get -yq update && apt-get -yq install build-essential \
 				vim-nox curl \
