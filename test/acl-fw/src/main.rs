@@ -1,3 +1,11 @@
+//! Firewall Network Funcion implemented in NetBricks.
+//!
+//! ## Description:
+//! This NF is based on a simple firewall implemented in Click [5]; the firewall performs a linear
+//! scan of an access control list to find the first matching entry.
+//!
+//! For details please refer to the section 5.2.2 of the NetBricks paper.
+
 #![feature(box_syntax)]
 #![feature(asm)]
 extern crate e2d2;
@@ -29,16 +37,14 @@ fn test<S: Scheduler + Sized>(ports: Vec<CacheAligned<PortQueue>>, sched: &mut S
             port.txq()
         );
     }
-    let acls = vec![
-        Acl {
-            src_ip: Some(Ipv4Prefix::new(0, 0)),
-            dst_ip: None,
-            src_port: None,
-            dst_port: None,
-            established: None,
-            drop: false,
-        },
-    ];
+    let acls = vec![Acl {
+        src_ip: Some(Ipv4Prefix::new(0, 0)),
+        dst_ip: None,
+        src_port: None,
+        dst_port: None,
+        established: None,
+        drop: false,
+    }];
     let pipelines: Vec<_> = ports
         .iter()
         .map(|port| acl_match(ReceiveBatch::new(port.clone()), acls.clone()).send(port.clone()))
