@@ -1,3 +1,10 @@
+//! Maglev Load Balancer Network Funcion implemented in NetBricks.
+//!
+//! ## Description:
+//! This load-balancer is based on Maglev scalable load-balancer[9].
+//!
+//! For details please refer to the section 4 and 5.2.2 of the NetBricks paper.
+
 #![feature(box_syntax)]
 extern crate e2d2;
 extern crate fnv;
@@ -29,13 +36,7 @@ where
 
     let pipelines: Vec<_> = ports
         .iter()
-        .map(|port| {
-            maglev(
-                ReceiveBatch::new(port.clone()),
-                sched,
-                &vec!["Larry", "Curly", "Moe"],
-            ).send(port.clone())
-        })
+        .map(|port| maglev(ReceiveBatch::new(port.clone()), sched, &vec!["Larry", "Curly", "Moe"]).send(port.clone()))
         .collect();
     println!("Running {} pipelines", pipelines.len());
     sched.add_task(merge(pipelines)).unwrap();

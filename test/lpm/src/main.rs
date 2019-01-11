@@ -1,3 +1,11 @@
+//! Longest Prefix Matching NF implemented in NetBricks.
+//!
+//! ## Description:
+//! This is a longest prefix match (LPM) lookup table using the DIR-24-8 algorithm [16] in Rust, and built
+//! a NetBricks NF that uses this data structure to route IP packets.
+//!
+//! For details please refer to the section 5.2.1 of the NetBricks paper.
+
 #![feature(box_syntax)]
 extern crate e2d2;
 extern crate fnv;

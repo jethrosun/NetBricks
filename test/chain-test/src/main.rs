@@ -1,3 +1,11 @@
+//! TTL processing Network Funcion implemented in NetBricks.
+//!
+//! ## Description:
+//! When received a packet, this NF will parses the packet until the IP header, then decrements the
+//! packet’s IP time-to-live (TTL) field, and drops any packets whose TTL equals 0.
+//!
+//! For details please refer to the section 5.2.1 and 5.3.2 of the NetBricks paper.
+
 #![feature(box_syntax)]
 extern crate e2d2;
 extern crate fnv;
@@ -26,10 +34,7 @@ where
 {
     println!("Receiving started");
     for port in &ports {
-        println!(
-            "Receiving port {} on chain len {} pos {}",
-            port, chain_len, chain_pos
-        );
+        println!("Receiving port {} on chain len {} pos {}", port, chain_len, chain_pos);
     }
 
     let pipelines: Vec<_> = ports
@@ -45,12 +50,7 @@ where
 fn main() {
     let mut opts = basic_opts();
     opts.optopt("l", "chain", "Chain length", "length");
-    opts.optopt(
-        "j",
-        "position",
-        "Chain position (when externally chained)",
-        "position",
-    );
+    opts.optopt("j", "position", "Chain position (when externally chained)", "position");
     let args: Vec<String> = env::args().collect();
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,

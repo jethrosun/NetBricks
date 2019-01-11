@@ -1,3 +1,12 @@
+//! Mac addresss swap NF implemented in NetBricks.
+//!
+//! ## Description:
+//! This NF swaps the source and destination ethernet address for received packets and forwards
+//! them out the same port. The NetBricks NF adds no additional overhead when compared to a native
+//! C NF.
+//!
+//! For details please refer to the section 5.3.1 of the NetBricks paper.
+
 #![feature(box_syntax)]
 #![feature(asm)]
 extern crate e2d2;
