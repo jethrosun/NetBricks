@@ -1,5 +1,5 @@
-use e2d2::headers::*;
-use e2d2::operators::*;
+use e2d2::headers::{IpHeader, MacHeader, NullHeader};
+use e2d2::operators::{Batch, CompositionBatch};
 use e2d2::utils::{Flow, Ipv4Prefix};
 use fnv::FnvHasher;
 use std::collections::HashSet;
