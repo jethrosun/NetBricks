@@ -1,11 +1,11 @@
-use e2d2::headers::*;
-use e2d2::operators::*;
-use e2d2::scheduler::*;
-use e2d2::utils::*;
+use e2d2::headers::{MacHeader, NullHeader};
+use e2d2::operators::{merge, Batch, CompositionBatch};
+use e2d2::scheduler::Scheduler;
+use e2d2::utils::ipv4_flow_hash;
 use fnv::FnvHasher;
 use std::collections::HashMap;
-use std::hash::{BuildHasher, Hash, Hasher};
 use std::hash::BuildHasherDefault;
+use std::hash::{BuildHasher, Hash, Hasher};
 use twox_hash::XxHash;
 
 type FnvHash = BuildHasherDefault<FnvHasher>;

@@ -1,7 +1,7 @@
 use e2d2::common::EmptyMetadata;
-use e2d2::headers::*;
-use e2d2::operators::*;
-use e2d2::scheduler::*;
+use e2d2::headers::{IpHeader, MacHeader, NullHeader};
+use e2d2::operators::{merge, Batch, CompositionBatch};
+use e2d2::scheduler::Scheduler;
 use fnv::FnvHasher;
 use std::collections::HashMap;
 use std::convert::From;
@@ -225,6 +225,7 @@ pub fn lpm<T: 'static + Batch<Header = NullHeader, Metadata = EmptyMetadata>, S:
         groups.get_group(0).unwrap(),
         groups.get_group(1).unwrap(),
         groups.get_group(2).unwrap(),
-    ]).compose();
+    ])
+    .compose();
     pipeline
 }
