@@ -1,7 +1,7 @@
-use e2d2::headers::*;
-use e2d2::operators::*;
-use e2d2::scheduler::*;
-use e2d2::utils::*;
+use e2d2::headers::{MacHeader, NullHeader};
+use e2d2::operators::{Batch, CompositionBatch};
+use e2d2::scheduler::Scheduler;
+use e2d2::utils::{ipv4_extract_flow, Flow};
 use fnv::FnvHasher;
 use std::collections::HashMap;
 use std::convert::From;

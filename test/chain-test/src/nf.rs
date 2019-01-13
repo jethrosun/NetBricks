@@ -1,6 +1,6 @@
 use e2d2::common::EmptyMetadata;
-use e2d2::headers::*;
-use e2d2::operators::*;
+use e2d2::headers::{IpHeader, MacHeader, NullHeader};
+use e2d2::operators::{Batch, CompositionBatch};
 
 #[inline]
 pub fn chain_nf<T: 'static + Batch<Header = NullHeader, Metadata = EmptyMetadata>>(parent: T) -> CompositionBatch {
