@@ -1,9 +1,11 @@
+use std::collections::HashSet;
+use std::hash::BuildHasherDefault;
+
 use e2d2::headers::{IpHeader, MacHeader, NullHeader};
 use e2d2::operators::{Batch, CompositionBatch};
 use e2d2::utils::{Flow, Ipv4Prefix};
+
 use fnv::FnvHasher;
-use std::collections::HashSet;
-use std::hash::BuildHasherDefault;
 
 type FnvHash = BuildHasherDefault<FnvHasher>;
 
