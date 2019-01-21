@@ -13,17 +13,21 @@ extern crate fnv;
 extern crate getopts;
 extern crate rand;
 extern crate time;
-use self::nf::{acl_match, Acl};
+
+use std::env;
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
+
 use e2d2::allocators::CacheAligned;
 use e2d2::config::{basic_opts, read_matches};
 use e2d2::interface::PortQueue;
 use e2d2::operators::{Batch, ReceiveBatch};
 use e2d2::scheduler::{initialize_system, Scheduler, StandaloneScheduler};
 use e2d2::utils::Ipv4Prefix;
-use std::env;
-use std::sync::Arc;
-use std::thread;
-use std::time::Duration;
+
+use self::nf::{acl_match, Acl};
+
 mod nf;
 
 const CONVERSION_FACTOR: f64 = 1000000000.;
