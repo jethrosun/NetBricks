@@ -1,14 +1,17 @@
-use e2d2::headers::*;
-use e2d2::operators::*;
-use e2d2::scheduler::*;
-use e2d2::state::*;
+use e2d2::headers::{NullHeader,IpHeader, TcpHeader, MacHeader};
+use e2d2::operators::{CompositionBatch, Batch, merge};
+use e2d2::scheduler::Scheduler;
+use e2d2::state::{InsertionResult, ReorderedBuffer};
 use e2d2::utils::Flow;
-use fnv::FnvHasher;
+
 use std::collections::HashMap;
 use std::collections::hash_map::Entry;
 use std::hash::BuildHasherDefault;
 
+use fnv::FnvHasher;
+
 type FnvHash = BuildHasherDefault<FnvHasher>;
+
 const BUFFER_SIZE: usize = 2048;
 const PRINT_SIZE: usize = 256;
 

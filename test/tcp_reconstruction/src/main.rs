@@ -5,12 +5,15 @@ extern crate fnv;
 extern crate getopts;
 extern crate rand;
 extern crate time;
-use self::nf::*;
+
+use self::nf::reconstruction;
+
 use e2d2::allocators::CacheAligned;
-use e2d2::config::*;
-use e2d2::interface::*;
-use e2d2::operators::*;
-use e2d2::scheduler::*;
+use e2d2::config::{read_matches, basic_opts};
+use e2d2::interface::PortQueue;
+use e2d2::operators::{Batch, ReceiveBatch};
+use e2d2::scheduler::{StandaloneScheduler, initialize_system, Scheduler};
+
 use std::env;
 use std::sync::Arc;
 use std::thread;
