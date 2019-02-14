@@ -492,7 +492,8 @@ case $TASK in
         pushd $BASE_DIR/framework
         ${CARGO} clean
         ${CARGO} update # Clippy breaks with new compilers
-        ${CARGO} build --features dev
+        #${CARGO} build --features dev
+        ${CARGO} build --features clippy
         popd
         ;;
     dist_clean)

@@ -12,7 +12,6 @@ libc = ">= 0.2.4"
 time = ">=0.1.0"
 getopts = "*"
 byteorder = "*"
-clippy = { version = "*", optional = true }
 fnv = "*"
 twox-hash = "*"
 regex = "*"
