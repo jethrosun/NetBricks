@@ -1,3 +1,4 @@
+#![allow(deprecated)]
 mod errors;
 pub use self::errors::*;
 

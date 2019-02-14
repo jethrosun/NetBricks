@@ -1,4 +1,4 @@
-use std::alloc::{self, Alloc, Global, Layout};
+use std::alloc::{self, Alloc, Layout};
 use std::fmt;
 use std::mem::size_of;
 use std::ops::{Deref, DerefMut};
