@@ -516,15 +516,15 @@ case $TASK in
           build: Build the project (this includes framework and all tests).
           build_fmwk: Just build framework.
           build_test: Build a particular test.
-          create_container: Build the NetBricks container.
+          ctr_create: Build the NetBricks container.
+          ctr_update: Update and push container used for build.
+          ctr_build: Build NetBricks within a container.
           ctr_dpdk: Copy DPDK from container
-          build_container: Build NetBricks within a container.
           test: Run unit tests.
           run: Run one of the examples (Must specify example name and arguments).
           debug: Debug one of the examples (Must specify example name and examples).
           doc: Run rustdoc and produce documentation
           update_rust: Pull and update Cargo.
-          update_container: Update and push container used for build.
           fmt: Run rustfmt to format code.
           fmt_travis: Run rustfmt to detect code formatting violations.
           lint: Run clippy to lint the project
