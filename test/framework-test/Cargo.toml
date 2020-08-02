@@ -7,7 +7,7 @@ authors = ["Aurojit Panda <apanda@cs.berkeley.edu>"]
 e2d2 = { path = "../../framework", features = ["performance"] }
 time = ">=0.1.0"
 getopts = "*"
-rand = "0.3"
+rand = "0.7"
 
 [features]
 default = []
