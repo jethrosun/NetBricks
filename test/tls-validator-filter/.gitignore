@@ -1,9 +1,0 @@
-output.out
-perf.data
-perf.data.old
-stacks.folded*
-out.profile
-*.pl
-heaptrack*
-callgrind*
-*.log
