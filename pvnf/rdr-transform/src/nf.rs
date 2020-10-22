@@ -93,29 +93,25 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>>(parent: T, _s: &mut dyn Sche
             let mut matched = false;
             // NOTE: the following ip addr and port are hardcode based on the trace we are
             // replaying
-            // let match_ip = 180_907_852 as u32;
-            let match_ip = 3_232_235_524 as u32; // 192.168.0.4
-            let match_port = 443;
 
+            let match_ip = 180_907_852 as u32; // 10.200.111.76
             let (src_ip, dst_ip, proto): (&u32, &u32, &u8) = match p.read_metadata() {
                 Some((src, dst, p)) => (src, dst, p),
                 None => (&0, &0, &0),
             };
-
             let src_port = p.get_header().src_port();
             let dst_port = p.get_header().dst_port();
 
             if *proto == 6 {
-                if *src_ip == match_ip && dst_port == match_port {
+                if *src_ip == match_ip {
                     matched = true
-                } else if *dst_ip == match_ip && src_port == match_port {
+                } else if *dst_ip == match_ip {
                     matched = true
                 }
             }
 
             // Scheduling browsing jobs.
             if matched {
-                // Scheduling browsing jobs.
                 // FIXME: This is not ideal as we are not actually schedule browse.
                 let cur_time = now.elapsed().as_secs() as usize;
                 if rdr_workload.contains_key(&cur_time) {
