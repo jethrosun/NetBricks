@@ -33,6 +33,10 @@ export examples=(
 	test/app-xcdr_g
 	test/app-xcdr_t
 	# PVN NF libraries
+	pvnf/tlsv
+	pvnf/rdr
+	pvnf/p2p
+	pvnf/xcdr
 	pvnf/tlsv-groupby
 	pvnf/tlsv-transform
 	pvnf/rdr-groupby
@@ -42,6 +46,12 @@ export examples=(
 	pvnf/xcdr-groupby
 	pvnf/xcdr-transform
 	# PVN chain
+	# test/co-rdr-tlsv
+	test/co-rdr-p2p
+	# test/co-rdr-xcdr
+	# test/co-tlsv-p2p
+	# test/co-tlsv-xcdr
+	# test/co-xcdr-p2p
 	test/chain-rdr-tlsv_g
 	test/chain-rdr-tlsv_t
 	test/chain-rdr-p2p_g

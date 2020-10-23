@@ -1,0 +1,15 @@
+[package]
+name = "pvn-xcdr-p2p-coexist-app"
+version = "0.1.0"
+authors = ["Shuwen Jethro Sun <jethrosun@ccs.neu.edu>"]
+edition = "2018"
+
+[dependencies]
+e2d2 = { path = "../../framework", features = ["performance"] }
+xcdr-groupby = { path = "../../pvnf/xcdr-groupby" }
+p2p-groupby = { path = "../../pvnf/p2p-groupby" }
+time = "0.2.22"
+
+[features]
+default = []
+print = []
