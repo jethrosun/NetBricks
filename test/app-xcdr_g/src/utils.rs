@@ -23,8 +23,8 @@ pub fn append_job_faktory(
         .lock()
         .unwrap()
         .enqueue(Job::new(
-            "app-xcdr_".to_owned() + &core_id.to_string() + "-" + expr_num,
-            // "app-xcdr_".to_owned() + expr_num,
+            // "app-xcdr_".to_owned() + &core_id.to_string() + "-" + expr_num,
+            "app-xcdr_".to_owned() + expr_num,
             vec![infile.to_string(), outfile.to_string(), width_height.to_string()],
         ))
         .unwrap();
