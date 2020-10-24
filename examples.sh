@@ -37,14 +37,14 @@ export examples=(
 	pvnf/rdr
 	pvnf/p2p
 	pvnf/xcdr
-	pvnf/tlsv-groupby
-	pvnf/tlsv-transform
-	pvnf/rdr-groupby
-	pvnf/rdr-transform
-	pvnf/p2p-groupby
-	pvnf/p2p-transform
-	pvnf/xcdr-groupby
-	pvnf/xcdr-transform
+	# pvnf/tlsv-groupby
+	# pvnf/tlsv-transform
+	# pvnf/rdr-groupby
+	# pvnf/rdr-transform
+	# pvnf/p2p-groupby
+	# pvnf/p2p-transform
+	# pvnf/xcdr-groupby
+	# pvnf/xcdr-transform
 	# PVN chain
 	# test/co-rdr-tlsv
 	test/co-rdr-p2p
@@ -52,16 +52,16 @@ export examples=(
 	# test/co-tlsv-p2p
 	# test/co-tlsv-xcdr
 	# test/co-xcdr-p2p
-	test/chain-rdr-tlsv_g
-	test/chain-rdr-tlsv_t
-	test/chain-rdr-p2p_g
-	test/chain-rdr-p2p_t
-	test/chain-rdr-xcdr_g
-	test/chain-rdr-xcdr_t
-	test/chain-tlsv-p2p_g
-	test/chain-tlsv-p2p_t
-	test/chain-tlsv-xcdr_g
-	test/chain-tlsv-xcdr_t
-	test/chain-xcdr-p2p_g
-	test/chain-xcdr-p2p_t
+	# test/chain-rdr-tlsv_g
+	# test/chain-rdr-tlsv_t
+	# test/chain-rdr-p2p_g
+	# test/chain-rdr-p2p_t
+	# test/chain-rdr-xcdr_g
+	# test/chain-rdr-xcdr_t
+	# test/chain-tlsv-p2p_g
+	# test/chain-tlsv-p2p_t
+	# test/chain-tlsv-xcdr_g
+	# test/chain-tlsv-xcdr_t
+	# test/chain-xcdr-p2p_g
+	# test/chain-xcdr-p2p_t
 )

@@ -1,23 +1,24 @@
 use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::operators::{merge, Batch, CompositionBatch};
-use e2d2::pvn::measure::read_setup_iter;
-use e2d2::pvn::measure::{compute_stat, merge_ts, APP_MEASURE_TIME, EPSILON, NUM_TO_IGNORE, TOTAL_MEASURED_PKT};
-use e2d2::pvn::p2p::p2p_read_type;
-use e2d2::pvn::p2p::p2p_retrieve_param;
-use e2d2::pvn::rdr::{rdr_load_workload, rdr_read_rand_seed, rdr_retrieve_users};
+use e2d2::pvn::measure::*;
+use e2d2::pvn::p2p::*;
+use e2d2::pvn::rdr::*;
 use e2d2::scheduler::Scheduler;
 use headless_chrome::Browser;
-use rdr::utils::browser_create;
-use rdr::utils::rdr_scheduler_ng;
+use p2p::utils::*;
 use rdr::utils::*;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
+use tokio::runtime::Runtime;
 
 pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     parent: T,
     sched: &mut S,
 ) -> CompositionBatch {
+    // FIXME: read inst mode
+    let inst = false;
+
     // RDR setup
     let (rdr_setup, rdr_iter) = read_setup_iter("/home/jethros/setup".to_string()).unwrap();
     let num_of_users = rdr_retrieve_users(rdr_setup).unwrap();
@@ -27,6 +28,7 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
     let (p2p_setup, p2p_iter) = read_setup_iter("/home/jethros/setup".to_string()).unwrap();
     let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string()).unwrap();
     let p2p_type = p2p_read_type("/home/jethros/setup".to_string()).unwrap();
+    let torrents_dir = "/home/jethros/dev/pvn/utils/workloads/torrent_files/";
     let mut workload_exec = true;
 
     // Measurement code
@@ -45,6 +47,7 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
     let t1_2 = Arc::clone(&start_ts);
     let t2_1 = Arc::clone(&stop_ts_matched);
     let t2_2 = Arc::clone(&stop_ts_matched);
+    let t2_3 = Arc::clone(&stop_ts_matched);
 
     // Pkt counter. We keep track of every packet.
     let mut pkt_count = 0;
@@ -73,8 +76,9 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
     let mut num_of_closed = 0;
     let mut num_of_visit = 0;
 
-    let mut pivot = 1;
+    // let mut pivot = 1;
     let now = Instant::now();
+    let mut start = Instant::now();
 
     // group packets into MAC, TCP and UDP packet.
     let mut groups = parent
@@ -84,7 +88,9 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let end = Instant::now();
-                // w.push(end;
+                if inst {
+                    w.push(end);
+                }
             }
         })
         .parse::<MacHeader>()
@@ -159,7 +165,9 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
 
                 if pkt_count > NUM_TO_IGNORE && matched == 0 {
                     let end = Instant::now();
-                    // stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
+                    if inst {
+                        stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
+                    }
                 }
 
                 matched
@@ -209,59 +217,76 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
 
             // Measurement: instrumentation to collect latency metrics
             if pkt_count > NUM_TO_IGNORE {
-                let mut w = t2_1.lock().unwrap();
+                let mut w = t2_3.lock().unwrap();
                 let end = Instant::now();
-                // w.push(end);
+                if inst {
+                    w.push(end);
+                }
             }
         })
         .reset()
         .compose();
 
     let p2p_pipe = groups
-        .get_group(2)
+        .get_group(3)
         .unwrap()
-        .transform(box move |pkt| {
-            // Scheduling browsing jobs.
-            // FIXME: This is not ideal as we are not actually schedule browse.
-            let cur_time = now.elapsed().as_secs() as usize;
-            if rdr_workload.contains_key(&cur_time) {
-                println!("pivot {:?}", cur_time);
-                let min = cur_time / 60;
-                let rest_sec = cur_time % 60;
-                println!("{:?} min, {:?} second", min, rest_sec);
-                match rdr_workload.remove(&cur_time) {
-                    Some(wd) => match rdr_scheduler_ng(&cur_time, &rdr_users, wd, &browser_list) {
-                        Some((oks, errs, timeouts, closeds, visits, elapsed)) => {
-                            num_of_ok += oks;
-                            num_of_err += errs;
-                            num_of_timeout += timeouts;
-                            num_of_closed += closeds;
-                            num_of_visit += visits;
-                            elapsed_time.push(elapsed);
+        .transform(box move |_| {
+            if workload_exec {
+                // Workload
+                let fp_workload = p2p_fetch_workload("/home/jethros/setup".to_string()).unwrap();
+
+                println!("p2p type: {}", p2p_type);
+                match &*p2p_type {
+                    // use our shell wrapper to interact with qBitTorrent
+                    // FIXME: it would be nicer if we can employ a Rust crate for this
+                    "app_p2p-controlled" => {
+                        println!("match p2p controlled before btrun");
+
+                        // let _ = bt_run_torrents(fp_workload, num_of_torrents);
+                        let _ = bt_run_torrents(fp_workload, p2p_setup.clone());
+
+                        println!("bt run is not blocking");
+                        workload_exec = false;
+                    }
+                    // use the transmission rpc for general and ext workload
+                    "app_p2p" | "app_p2p-ext" => {
+                        println!("match p2p general or ext ");
+                        let p2p_torrents = p2p_read_rand_seed(num_of_torrents, p2p_iter.to_string()).unwrap();
+                        let workload = p2p_load_json(fp_workload.to_string(), p2p_torrents);
+
+                        let mut rt = Runtime::new().unwrap();
+                        match rt.block_on(add_all_torrents(
+                            num_of_torrents,
+                            workload.clone(),
+                            torrents_dir.to_string(),
+                        )) {
+                            Ok(_) => println!("Add torrents success"),
+                            Err(e) => println!("Add torrents failed with {:?}", e),
                         }
-                        None => println!("No workload for second {:?}", cur_time),
-                    },
-                    None => println!("No workload for second {:?}", cur_time),
+                        match rt.block_on(run_all_torrents()) {
+                            Ok(_) => println!("Run torrents success"),
+                            Err(e) => println!("Run torrents failed with {:?}", e),
+                        }
+                    }
+                    _ => println!("Current P2P type: {:?} doesn't match to any workload we know", p2p_type),
                 }
+
+                workload_exec = false;
+            }
+
+            if start.elapsed().as_secs() >= 1 as u64 {
+                start = Instant::now();
             }
 
             pkt_count += 1;
+            // println!("pkt count {:?}", pkt_count);
 
-            if now.elapsed().as_secs() >= APP_MEASURE_TIME && metric_exec == true {
-                // Measurement: metric for the performance of the RDR proxy
-                println!(
-                    "Metric: num_of_oks: {:?}, num_of_errs: {:?}, num_of_timeout: {:?}, num_of_closed: {:?}, num_of_visit: {:?}",
-                    num_of_ok, num_of_err, num_of_timeout, num_of_closed, num_of_visit,
-                );
-                println!("Metric: Browsing Time: {:?}\n", elapsed_time);
-                metric_exec = false;
-            }
-
-            // Measurement: instrumentation to collect latency metrics
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_1.lock().unwrap();
                 let end = Instant::now();
-                // w.push(end);
+                if inst {
+                    w.push(end);
+                }
             }
         })
         .reset()
