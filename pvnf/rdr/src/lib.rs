@@ -25,8 +25,8 @@ use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
-mod nf;
-mod utils;
+pub mod nf;
+pub mod utils;
 
 const CONVERSION_FACTOR: f64 = 1_000_000_000.;
 

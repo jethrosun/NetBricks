@@ -2,9 +2,14 @@ use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::operators::{merge, Batch, CompositionBatch};
 use e2d2::pvn::measure::read_setup_iter;
 use e2d2::pvn::measure::{compute_stat, merge_ts, APP_MEASURE_TIME, EPSILON, NUM_TO_IGNORE, TOTAL_MEASURED_PKT};
+use e2d2::pvn::p2p::p2p_read_type;
+use e2d2::pvn::p2p::p2p_retrieve_param;
 use e2d2::pvn::rdr::{rdr_load_workload, rdr_read_rand_seed, rdr_retrieve_users};
 use e2d2::scheduler::Scheduler;
 use headless_chrome::Browser;
+use rdr::utils::browser_create;
+use rdr::utils::rdr_scheduler_ng;
+use rdr::utils::*;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
@@ -13,9 +18,16 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
     parent: T,
     sched: &mut S,
 ) -> CompositionBatch {
+    // RDR setup
     let (rdr_setup, rdr_iter) = read_setup_iter("/home/jethros/setup".to_string()).unwrap();
     let num_of_users = rdr_retrieve_users(rdr_setup).unwrap();
     let rdr_users = rdr_read_rand_seed(num_of_users, rdr_iter).unwrap();
+
+    // P2P setup
+    let (p2p_setup, p2p_iter) = read_setup_iter("/home/jethros/setup".to_string()).unwrap();
+    let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string()).unwrap();
+    let p2p_type = p2p_read_type("/home/jethros/setup".to_string()).unwrap();
+    let mut workload_exec = true;
 
     // Measurement code
     //
@@ -61,12 +73,6 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
     let mut num_of_closed = 0;
     let mut num_of_visit = 0;
 
-    // P2P setup
-    let (p2p_setup, p2p_iter) = read_setup_iter("/home/jethros/setup".to_string()).unwrap();
-    let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string()).unwrap();
-    let p2p_type = p2p_read_type("/home/jethros/setup".to_string()).unwrap();
-    let mut workload_exec = true;
-
     let mut pivot = 1;
     let now = Instant::now();
 
@@ -99,20 +105,22 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
                     Some((src, dst, p)) => (src, dst, p),
                     None => (&0, &0, &0),
                 };
+                let src_port = p.get_header().src_port();
+                let dst_port = p.get_header().dst_port();
 
                 // 0 means the packet doesn't match RDR or P2P
                 let mut matched = 0;
                 // NOTE: the following ip addr and port are hardcode based on the trace we are
                 // replaying
                 let match_ip = 180_907_852 as u32; // 10.200.111.76
-                let rdr_match_port = 443 as u32;
+                let rdr_match_port = 443 as u16;
                 // https://wiki.wireshark.org/BitTorrent
                 let p2p_match_port = vec![6346, 6882, 6881, 6883, 6884, 6885, 6886, 6887, 6888, 6889, 6969];
 
                 // Match RDR packets to group 1 and P2P packets to group 2, the rest to group 0
                 if *proto == 6 {
-                    if *src_ip == match_ip || &dst_ip == match_ip {
-                        if *src_port == rdr_match_port || dst_port == rdr_match_port {
+                    if *src_ip == match_ip || *dst_ip == match_ip {
+                        if src_port == rdr_match_port || dst_port == rdr_match_port {
                             matched = 1
                         } else if p2p_match_port.contains(&src_port) || p2p_match_port.contains(&dst_port) {
                             matched = 2
@@ -149,7 +157,7 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
                     latency_exec = false;
                 }
 
-                if pkt_count > NUM_TO_IGNORE && !matched {
+                if pkt_count > NUM_TO_IGNORE && matched == 0 {
                     let end = Instant::now();
                     // stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
                 }
@@ -259,6 +267,5 @@ pub fn rdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Size
         .reset()
         .compose();
 
-    let pipelines = merge(vec![groups.get_group(0).unwrap(), rdr_pipe, p2p_pipe]).compose();
-    pipelines
+    merge(vec![rdr_pipe, p2p_pipe, groups.get_group(1).unwrap().compose()]).compose()
 }

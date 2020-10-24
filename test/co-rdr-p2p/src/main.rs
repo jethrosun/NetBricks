@@ -4,16 +4,15 @@
 #![feature(box_syntax)]
 #![feature(asm)]
 extern crate e2d2;
-extern crate p2p;
-extern crate rdr;
+extern crate headless_chrome;
+extern crate time;
 
+use crate::nf::rdr_p2p_test;
 use e2d2::allocators::CacheAligned;
 use e2d2::config::*;
 use e2d2::interface::*;
 use e2d2::operators::*;
 use e2d2::scheduler::*;
-use p2p_groupby::p2p_test;
-use rdr_groupby::rdr_proxy_test;
 use std::env;
 use std::sync::Arc;
 use std::thread;
@@ -22,6 +21,31 @@ use std::time::{Duration, Instant};
 mod nf;
 
 const CONVERSION_FACTOR: f64 = 1_000_000_000.;
+
+/// Test for the rdr proxy network function to schedule pipelines.
+fn test<S: Scheduler + Sized>(ports: Vec<CacheAligned<PortQueue>>, sched: &mut S) {
+    for port in &ports {
+        println!(
+            "Receiving port {} rxq {} txq {}",
+            port.port.mac_address(),
+            port.rxq(),
+            port.txq()
+        );
+    }
+
+    // create a pipeline for each port
+    let pipelines: Vec<_> = ports
+        .iter()
+        .map(|port| rdr_p2p_test(ReceiveBatch::new(port.clone()), sched).send(port.clone()))
+        .collect();
+
+    println!("Running {} pipelines", pipelines.len());
+
+    // schedule pipelines
+    for pipeline in pipelines {
+        sched.add_task(pipeline).unwrap();
+    }
+}
 
 /// default main
 fn main() {
@@ -39,7 +63,7 @@ fn main() {
     let duration = configuration.duration;
 
     config.start_schedulers();
-    config.add_pipeline_to_run(Arc::new(move |p, s: &mut StandaloneScheduler| rdr_p2p_test(p, s)));
+    config.add_pipeline_to_run(Arc::new(move |p, s: &mut StandaloneScheduler| test(p, s)));
     config.execute();
 
     let mut pkts_so_far = (0, 0);

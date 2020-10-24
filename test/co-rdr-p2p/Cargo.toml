@@ -1,7 +1,7 @@
 [package]
 name = "pvn-rdr-p2p-coexist-app"
-version = "0.1.0"
-authors = ["Shuwen Jethro Sun <jethrosun@ccs.neu.edu>"]
+version = "0.2.0"
+authors = ['Shuwen "Jethro" Sun <jethrosun@ccs.neu.edu>']
 edition = "2018"
 
 [dependencies]
@@ -9,6 +9,7 @@ e2d2 = { path = "../../framework", features = ["performance"] }
 rdr = { path = "../../pvnf/rdr" }
 p2p = { path = "../../pvnf/p2p" }
 time = "0.2.22"
+headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
 
 [features]
 default = []
