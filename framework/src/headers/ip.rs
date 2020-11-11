@@ -20,7 +20,7 @@ pub struct IpHeader {
 }
 
 impl fmt::Display for IpHeader {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let src = Ipv4Addr::from(self.src());
         let dst = Ipv4Addr::from(self.dst());
         write!(

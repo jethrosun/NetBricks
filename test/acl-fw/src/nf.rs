@@ -1,6 +1,6 @@
 use e2d2::headers::{IpHeader, MacHeader, NullHeader};
-use e2d2::measure::*;
 use e2d2::operators::{Batch, CompositionBatch};
+use e2d2::pvn::measure::*;
 use e2d2::utils::{Flow, Ipv4Prefix};
 use fnv::FnvHasher;
 use std::collections::HashSet;

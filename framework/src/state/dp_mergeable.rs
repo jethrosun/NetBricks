@@ -65,7 +65,7 @@ impl<T: AddAssign<T> + Default> DpMergeableStore<T> {
     ///
     /// #[Warning]
     /// This might have severe performance penalties.
-    pub fn iter(&mut self) -> Iter<Flow, T> {
+    pub fn iter(&mut self) -> Iter<'_, Flow, T> {
         self.merge_cache();
         self.state.iter()
     }

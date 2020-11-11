@@ -1,7 +1,7 @@
 use failure::Fallible;
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use std::collections::HashMap;
-use std::thread;
+
 use std::time::{Duration, Instant};
 use std::vec::Vec;
 
@@ -29,7 +29,7 @@ pub fn browser_create() -> Fallible<Browser> {
 }
 
 /// Simple user browse.
-pub fn simple_user_browse(current_browser: &Browser, hostname: &String, user: &i64) -> Fallible<(usize, u128)> {
+pub fn simple_user_browse(current_browser: &Browser, hostname: &String, _user: &i64) -> Fallible<(usize, u128)> {
     let now = Instant::now();
     let tabs = current_browser.get_tabs().lock().unwrap();
     let current_tab = tabs.iter().next().unwrap();
@@ -42,7 +42,7 @@ pub fn simple_user_browse(current_browser: &Browser, hostname: &String, user: &i
 
 /// RDR proxy browsing scheduler.
 pub fn rdr_scheduler_ng(
-    pivot: &usize,
+    _pivot: &usize,
     rdr_users: &Vec<i64>,
     current_work: Vec<(u64, String, i64)>,
     browser_list: &HashMap<i64, Browser>,
@@ -81,7 +81,7 @@ pub fn rdr_scheduler_ng(
                     _ => println!("Error: unknown user browsing error type"),
                 },
                 Err(e) => match e {
-                    ConnectionClosed => {
+                    _ConnectionClosed => {
                         num_of_closed += 1;
                         num_of_visit += 1;
                     }

@@ -173,7 +173,7 @@ pub fn p2p_fetch_workload(fp_setup: String) -> Option<&'static str> {
 }
 
 /// Parse the given p2p json workload.
-pub fn p2p_load_json(fp_workload: String, p2p_torrents: Vec<i64>) -> Vec<String> {
+pub fn p2p_load_json(fp_workload: String, _p2p_torrents: Vec<i64>) -> Vec<String> {
     let file = File::open(fp_workload).expect("file should open read only");
     let json: Value = from_reader(file).expect("file should be proper JSON");
 

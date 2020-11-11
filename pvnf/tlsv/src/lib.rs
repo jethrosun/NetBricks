@@ -15,18 +15,18 @@ extern crate log;
 
 use self::utils::{do_client_key_exchange, get_server_name, on_frame, tlsf_update};
 use e2d2::allocators::CacheAligned;
-use e2d2::config::*;
+
 use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::interface::*;
-use e2d2::operators::{merge, Batch, CompositionBatch, ReceiveBatch};
+use e2d2::operators::{Batch, CompositionBatch, ReceiveBatch};
 use e2d2::pvn::measure::*;
 use e2d2::scheduler::Scheduler;
 use e2d2::utils::Flow;
 use rustls::internal::msgs::handshake::HandshakePayload::{ClientHello, ClientKeyExchange, ServerHello};
 use std::collections::{HashMap, HashSet};
-use std::env;
+
 use std::sync::{Arc, Mutex};
-use std::thread;
+
 use std::time::{Duration, Instant};
 
 pub mod utils;
@@ -291,7 +291,7 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
             if now.elapsed().as_secs() >= measure_time && metric_exec == true {
                 println!("pkt count {:?}", pkt_count);
                 // let mut total_duration = Duration::new(0, 0);
-                let mut total_time1 = Duration::new(0, 0);
+                let _total_time1 = Duration::new(0, 0);
                 let w1 = t1_2.lock().unwrap();
                 let w2 = t2_2.lock().unwrap();
                 println!(

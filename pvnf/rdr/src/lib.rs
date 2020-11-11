@@ -16,20 +16,20 @@ extern crate tiny_http;
 
 use crate::utils::*;
 use e2d2::allocators::CacheAligned;
-use e2d2::config::*;
+
 use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::interface::*;
 use e2d2::operators::*;
-use e2d2::operators::{merge, Batch, CompositionBatch};
+use e2d2::operators::{Batch, CompositionBatch};
 use e2d2::pvn::measure::*;
 use e2d2::pvn::rdr::{rdr_load_workload, rdr_read_rand_seed, rdr_retrieve_users};
 use e2d2::scheduler::*;
 use headless_chrome::Browser;
 use std::collections::HashMap;
-use std::env;
+
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::{Duration, Instant};
+
+use std::time::{Instant};
 
 pub mod utils;
 
@@ -62,7 +62,7 @@ pub fn rdr_proxy_test<S: Scheduler + Sized>(ports: Vec<CacheAligned<PortQueue>>,
 
 pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     parent: T,
-    sched: &mut S,
+    _sched: &mut S,
 ) -> CompositionBatch {
     let (rdr_setup, rdr_iter, inst) = read_setup_param("/home/jethros/setup".to_string()).unwrap();
     let num_of_users = rdr_retrieve_users(rdr_setup).unwrap();
@@ -109,7 +109,7 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     }
     println!("{} browsers are created ", num_of_users);
 
-    let mut pivot = 1 as usize;
+    let _pivot = 1 as usize;
 
     // Metrics for measurement
     let mut elapsed_time = Vec::new();

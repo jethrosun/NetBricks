@@ -1,11 +1,11 @@
 use dotenv::dotenv;
-use fork::{daemon, Fork};
+
 use futures::{
     future::BoxFuture,
     stream::{FuturesUnordered, StreamExt},
 };
 use std::env;
-use std::env::var;
+
 use std::io::{self, Write};
 use std::process::Command;
 use transmission_rpc::types::{BasicAuth, Result, RpcResponse};
@@ -31,7 +31,7 @@ pub fn create_transmission_client() -> Result<TransClient> {
 }
 
 ///
-pub async fn add_all_torrents(p2p_param: usize, mut workload: Vec<String>, torrents_dir: String) -> Result<()> {
+pub async fn add_all_torrents(p2p_param: usize, workload: Vec<String>, torrents_dir: String) -> Result<()> {
     println!("debug: add all torrent to transmission client");
     let client = create_transmission_client().unwrap();
     let mut futures: FuturesUnordered<BoxFuture<Result<RpcResponse<TorrentAdded>>>> = FuturesUnordered::new();
@@ -82,7 +82,7 @@ pub async fn run_all_torrents() -> Result<()> {
 }
 
 /// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents_prev(workload: &str, num_of_torrents: usize) -> Result<Vec<std::process::Child>> {
+pub fn bt_run_torrents_prev(_workload: &str, num_of_torrents: usize) -> Result<Vec<std::process::Child>> {
     let mut bt_process = Vec::new();
     for i in 1..(num_of_torrents + 1) {
         let mut argv = Vec::new();
@@ -106,13 +106,13 @@ pub fn bt_run_torrents_prev(workload: &str, num_of_torrents: usize) -> Result<Ve
 }
 
 /// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents(workload: &str, setup: String) -> Result<()> {
+pub fn bt_run_torrents(_workload: &str, setup: String) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
     argv.push(setup);
     // argv.push("&".to_string());
 
-    let output = Command::new(&argv[0])
+    let _output = Command::new(&argv[0])
         .args(&argv[1..])
         .spawn()
         .expect("failed to execute process");
@@ -121,7 +121,7 @@ pub fn bt_run_torrents(workload: &str, setup: String) -> Result<()> {
 }
 
 /// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents_ng(workload: &str, setup: String) -> Result<()> {
+pub fn bt_run_torrents_ng(_workload: &str, setup: String) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
     argv.push(setup.to_string());

@@ -42,7 +42,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     let measure_time = if inst { INST_MEASURE_TIME } else { APP_MEASURE_TIME };
 
     let mut workload_exec = true;
-    let mut pivot = 0 as usize;
+    let _pivot = 0 as usize;
     let now = Instant::now();
     let mut start = Instant::now();
 
@@ -54,7 +54,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
 
     // group packets into MAC, TCP and UDP packet.
     let mut groups = parent
-        .transform(box move |p| {
+        .transform(box move |_p| {
             pkt_count += 1;
 
             if pkt_count > NUM_TO_IGNORE {
@@ -172,7 +172,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                     "app_p2p" | "app_p2p-ext" => {
                         println!("match p2p general or ext ");
                         let p2p_torrents = p2p_read_rand_seed(num_of_torrents, p2p_iter.to_string()).unwrap();
-                        let mut workload = p2p_load_json(fp_workload.to_string(), p2p_torrents);
+                        let workload = p2p_load_json(fp_workload.to_string(), p2p_torrents);
 
                         let mut rt = Runtime::new().unwrap();
                         match rt.block_on(add_all_torrents(

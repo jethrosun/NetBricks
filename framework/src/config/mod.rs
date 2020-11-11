@@ -62,7 +62,7 @@ impl NetbricksConfiguration {
 }
 
 impl fmt::Display for NetbricksConfiguration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(
             f,
             "Configuration: name: {} mempool size: {} core cache: {} primary core: {}\n Ports:",
@@ -139,7 +139,7 @@ impl PortConfiguration {
 }
 
 impl fmt::Display for PortConfiguration {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let rx_queues_str_vec: Vec<_> = self.rx_queues.iter().map(|q| q.to_string()).collect();
         let rx_queue_str = rx_queues_str_vec.join(" ");
         let tx_queues_str_vec: Vec<_> = self.tx_queues.iter().map(|q| q.to_string()).collect();

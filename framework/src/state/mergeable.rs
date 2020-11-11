@@ -54,7 +54,7 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
         MergeableStoreCP::dp_store_with_cache_and_size(self, CACHE_SIZE, VEC_SIZE)
     }
 
-    fn hmap_to_vec(hash: &RwLockReadGuard<HashMap<Flow, T, FnvHash>>) -> Vec<(Flow, T)> {
+    fn hmap_to_vec(hash: &RwLockReadGuard<'_, HashMap<Flow, T, FnvHash>>) -> Vec<(Flow, T)> {
         let mut t = Vec::with_capacity(hash.len());
         t.extend(hash.iter().map(|(f, v)| (*f, v.clone())));
         t
@@ -84,7 +84,7 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
         }
     }
 
-    pub fn iter(&self) -> Iter<Flow, T> {
+    pub fn iter(&self) -> Iter<'_, Flow, T> {
         self.flow_counters.iter()
     }
 

@@ -1,8 +1,8 @@
-use faktory::{Job, Producer};
+use faktory::{Job};
 use std::net::TcpStream;
 use std::sync::{Arc, Mutex};
-use std::thread;
-use std::time::Duration;
+
+
 
 /// Append job to a faktory queue.
 pub fn append_job_faktory(

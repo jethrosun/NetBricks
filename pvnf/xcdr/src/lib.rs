@@ -18,20 +18,20 @@ extern crate y4m;
 
 use crate::utils::*;
 use e2d2::allocators::CacheAligned;
-use e2d2::config::*;
-use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader, UdpHeader};
+
+use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::interface::*;
 use e2d2::operators::ReceiveBatch;
 use e2d2::operators::{merge, Batch, CompositionBatch};
 use e2d2::pvn::measure::*;
 use e2d2::pvn::xcdr::{xcdr_read_setup, xcdr_retrieve_param};
 use e2d2::scheduler::Scheduler;
-use faktory::{Job, Producer};
+use faktory::{Producer};
 use std::collections::HashMap;
-use std::env;
-use std::net::TcpStream;
+
+
 use std::sync::{Arc, Mutex};
-use std::thread;
+
 use std::time::{Duration, Instant};
 
 pub mod utils;
@@ -94,7 +94,7 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
 
     // group packets into MAC, TCP and UDP packet.
     let mut groups = parent
-        .transform(box move |p| {
+        .transform(box move |_p| {
             pkt_count += 1;
 
             if pkt_count > NUM_TO_IGNORE {
@@ -147,7 +147,7 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
 
                 if now.elapsed().as_secs() >= measure_time && inst && metric_exec == true {
                     println!("Pivot/span: {:?}", pivot / time_span);
-                    let mut w = latv_1.lock().unwrap();
+                    let w = latv_1.lock().unwrap();
                     println!("Metric: {:?}", w);
 
                     println!("pkt count {:?}", pkt_count);

@@ -86,7 +86,7 @@ pub fn read_matches(matches: &Matches, opts: &Options) -> NetbricksConfiguration
     };
 
     let configuration = if matches.opt_present("duration") {
-        let duration = matches.opt_strs("d");
+        let _duration = matches.opt_strs("d");
 
         NetbricksConfiguration {
             duration: None,

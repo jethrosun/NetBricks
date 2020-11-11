@@ -69,7 +69,7 @@ impl<T: AddAssign<T> + Default + Clone> CpMergeableStoreControlPlane<T> {
         }
     }
 
-    pub fn iter(&self) -> Iter<Flow, T> {
+    pub fn iter(&self) -> Iter<'_, Flow, T> {
         self.flow_counters.iter()
     }
 

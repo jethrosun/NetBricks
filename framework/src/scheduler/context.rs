@@ -26,7 +26,7 @@ impl<'a> BarrierHandle<'a> {
     }
 
     /// Allocate a new BarrierHandle with threads.
-    pub fn with_threads(threads: Vec<&'a Thread>) -> BarrierHandle {
+    pub fn with_threads(threads: Vec<&'a Thread>) -> BarrierHandle<'_> {
         BarrierHandle { threads }
     }
 }
@@ -159,7 +159,7 @@ impl NetBricksContext {
     }
 
     /// Pause all schedulers, the returned `BarrierHandle` can be used to resume.
-    pub fn barrier(&mut self) -> BarrierHandle {
+    pub fn barrier(&mut self) -> BarrierHandle<'_> {
         // TODO: If this becomes a problem, move this to the struct itself; but make sure to fix `stop` appropriately.
         let channels: Vec<_> = self.scheduler_handles.iter().map(|_| sync_channel(0)).collect();
         let receivers = channels.iter().map(|&(_, ref r)| r);
