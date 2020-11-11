@@ -10,8 +10,11 @@ mod standalone_scheduler;
 
 mod context;
 
+/// Executable.
 pub trait Executable {
+    /// Execute.
     fn execute(&mut self);
+    /// Dependencies.
     fn dependencies(&mut self) -> Vec<usize>;
 }
 
@@ -19,16 +22,20 @@ impl<F> Executable for F
 where
     F: FnMut(),
 {
+    /// Execute.
     fn execute(&mut self) {
         (*self)()
     }
 
+    /// Dependencies.
     fn dependencies(&mut self) -> Vec<usize> {
         vec![]
     }
 }
 
+/// Scheduler.
 pub trait Scheduler {
+    /// Add task to the scheduler.
     fn add_task<T: Executable + 'static>(&mut self, task: T) -> Result<usize>
     where
         Self: Sized;

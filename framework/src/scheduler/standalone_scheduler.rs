@@ -7,6 +7,7 @@ use std::sync::Arc;
 use std::thread;
 
 /// Used to keep stats about each pipeline and eventually grant tokens, etc.
+#[derive(Debug)]
 struct Runnable {
     pub task: Box<dyn Executable>,
     pub cycles: u64,
@@ -31,6 +32,7 @@ impl Runnable {
 }
 
 /// A very simple round-robin scheduler. This should really be more of a DRR scheduler.
+#[derive(Debug)]
 pub struct StandaloneScheduler {
     /// The set of runnable items. Note we currently don't have a blocked queue.
     run_q: Vec<Runnable>,
@@ -45,6 +47,7 @@ pub struct StandaloneScheduler {
 }
 
 /// Messages that can be sent on the scheduler channel to add or remove tasks.
+#[derive(Debug)]
 pub enum SchedulerCommand {
     Add(Box<dyn Executable + Send>),
     Run(Arc<dyn Fn(&mut StandaloneScheduler) + Send + Sync>),

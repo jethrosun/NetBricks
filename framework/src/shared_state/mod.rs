@@ -1,13 +1,15 @@
-/// Shareable data structures.
-pub mod directory;
+//! Shareable data structures.
 pub use self::shared_vec::*;
-mod shared_vec;
 use crate::utils::PAGE_SIZE;
 use libc::{self, c_void, close, ftruncate, mmap, munmap, shm_open, shm_unlink};
 use std::ffi::CString;
 use std::io::Error;
 use std::ptr;
 
+pub mod directory;
+mod shared_vec;
+
+#[derive(Debug)]
 struct SharedMemory<T> {
     pub mem: *mut T,
     name: CString,

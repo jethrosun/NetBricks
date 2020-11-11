@@ -12,6 +12,7 @@ mod phy_port;
 mod virt_port;
 
 /// Statistics for PMD port.
+#[derive(Debug)]
 struct PortStats {
     pub stats: AtomicUsize,
 }

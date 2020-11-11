@@ -3,6 +3,7 @@ use std::cmp::min;
 use std::io::{Read, Write};
 
 /// A ring buffer which can be used to insert and read ordered data.
+#[derive(Debug)]
 pub struct RingBuffer {
     /// Head, signifies where a consumer should read from.
     head: usize,
@@ -157,6 +158,7 @@ impl RingBuffer {
         self.tail = self.tail.wrapping_add(increment_by);
     }
 
+    /// Clear the RingBuffer.
     #[inline]
     pub fn clear(&mut self) {
         self.head = 0;

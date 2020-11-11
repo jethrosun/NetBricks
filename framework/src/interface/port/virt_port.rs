@@ -7,12 +7,13 @@ use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+#[derive(Debug)]
 pub struct VirtualPort {
     stats_rx: Arc<CacheAligned<PortStats>>,
     stats_tx: Arc<CacheAligned<PortStats>>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct VirtualQueue {
     stats_rx: Arc<CacheAligned<PortStats>>,
     stats_tx: Arc<CacheAligned<PortStats>>,

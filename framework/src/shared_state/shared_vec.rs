@@ -4,7 +4,9 @@ use std::borrow::Borrow;
 use std::hash::{Hash, Hasher};
 use std::ops::{Index, IndexMut, Range, RangeFrom, RangeTo};
 
+/// Shared Vector.
 #[allow(dead_code)] // FIXME: While WIP
+#[derive(Debug)]
 pub struct SharedVec<T: Sized + 'static> {
     vec: Vec<T>,
     shared: SharedMemory<T>,
@@ -12,6 +14,7 @@ pub struct SharedVec<T: Sized + 'static> {
 }
 
 impl<T: Sized + 'static> SharedVec<T> {
+    /// Initialize the ShareVec with given capacity.
     pub fn new_with_capacity(name: &str, capacity: usize) -> SharedVec<T> {
         let capacity_pages = round_to_pages(capacity);
         unsafe {

@@ -1,3 +1,5 @@
+//! NetBricks utils
+
 pub use self::asm::*;
 pub use self::flow::*;
 mod asm;

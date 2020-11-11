@@ -13,6 +13,7 @@ type AlignedPortQueue = CacheAligned<PortQueue>;
 type AlignedVirtualQueue = CacheAligned<VirtualQueue>;
 
 /// A handle to schedulers paused on a barrier.
+#[derive(Debug)]
 pub struct BarrierHandle<'a> {
     threads: Vec<&'a Thread>,
 }
@@ -32,11 +33,15 @@ impl<'a> BarrierHandle<'a> {
 }
 
 /// `NetBricksContext` contains handles to all schedulers, and provides mechanisms for coordination.
-#[derive(Default)]
+#[derive(Debug, Default)]
 pub struct NetBricksContext {
+    /// Ports.
     pub ports: HashMap<String, Arc<PmdPort>>,
+    /// RX queues.
     pub rx_queues: HashMap<i32, Vec<CacheAligned<PortQueue>>>,
+    /// Active cores.
     pub active_cores: Vec<i32>,
+    /// Virtual ports.
     pub virtual_ports: HashMap<i32, Arc<VirtualPort>>,
     scheduler_channels: HashMap<i32, SyncSender<SchedulerCommand>>,
     scheduler_handles: HashMap<i32, JoinHandle<()>>,
@@ -51,6 +56,7 @@ impl NetBricksContext {
         }
     }
 
+    /// Start a scheduler.
     #[inline]
     fn start_scheduler(&mut self, core: i32) {
         let builder = thread::Builder::new();
@@ -85,6 +91,7 @@ impl NetBricksContext {
         }
     }
 
+    /// Install a test pipeline.
     pub fn add_test_pipeline<T>(&mut self, run: Arc<T>)
     where
         T: Fn(Vec<AlignedVirtualQueue>, &mut StandaloneScheduler) + Send + Sync + 'static,
@@ -104,6 +111,7 @@ impl NetBricksContext {
         }
     }
 
+    /// Install a test pipeline on a particular core.
     pub fn add_test_pipeline_to_core<
         T: Fn(Vec<AlignedVirtualQueue>, &mut StandaloneScheduler) + Send + Sync + 'static,
     >(
@@ -186,6 +194,9 @@ impl NetBricksContext {
         println!("System shutdown");
     }
 
+    /// Wait and then stop the scheduler.
+    ///
+    /// [FIXME] Waiting is not implemented?
     pub fn wait(&mut self) {
         for (core, join_handle) in self.scheduler_handles.drain() {
             join_handle.join().unwrap();

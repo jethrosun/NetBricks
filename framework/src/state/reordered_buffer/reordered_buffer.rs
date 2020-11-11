@@ -5,13 +5,25 @@ use std::cmp::{max, min};
 use std::u16;
 
 /// Results from inserting into `ReorderedBuffer`
+#[derive(Debug)]
 pub enum InsertionResult {
     /// Successfully inserted all the data (`written` should always be the same as the length of the input).
-    Inserted { written: usize, available: usize },
+    Inserted {
+        /// Written size.
+        written: usize,
+        /// Available size.
+        available: usize,
+    },
     /// Inserted some of the data (recorded in `written`) but the buffer is out of space.
-    OutOfMemory { written: usize, available: usize },
+    OutOfMemory {
+        /// Written size.
+        written: usize,
+        /// Available size.
+        available: usize,
+    },
 }
 
+#[derive(Debug)]
 enum State {
     Closed,
     Connected,
@@ -19,7 +31,7 @@ enum State {
 }
 
 /// Structure to record unordered data.
-#[derive(Default)]
+#[derive(Default, Debug)]
 struct Segment {
     pub prev: isize,
     pub seq: u32,
@@ -42,6 +54,7 @@ impl Segment {
 
 /// A linked list of segments, this tries to avoid allocations whenever possible. In steady state (regardless of bad
 /// choices made by the developer) there should be no allocations.
+#[derive(Debug)]
 struct SegmentList {
     storage: Vec<Segment>,
     available: Vec<isize>,
@@ -295,8 +308,9 @@ impl SegmentList {
 /// A structure for storing data that might be received out of order. This allows data to be inserted in any order, but
 /// then allows ordered read from data.
 ///
-/// Note: reorderedbuffer has a series performance bug as it will also try to sort the current
-/// packet.
+/// Note: ReorderedBuffer has a series performance bug as it will also try to sort the current
+/// packet. It is recommended to implement your own buffer and sort it inside your own impl.
+#[derive(Debug)]
 pub struct ReorderedBuffer {
     data: RingBuffer,
     segment_list: SegmentList,
@@ -394,6 +408,7 @@ impl ReorderedBuffer {
         }
     }
 
+    /// ReorderedBuffer is established and not closed.
     #[inline]
     pub fn is_established(&self) -> bool {
         match self.state {
@@ -402,6 +417,7 @@ impl ReorderedBuffer {
         }
     }
 
+    /// Fast path to insert into the ReorderedBuffer.
     fn fast_path_insert(&mut self, data: &[u8]) -> InsertionResult {
         let written = self.data.write_at_tail(data);
         self.tail_seq = self.tail_seq.wrapping_add(written as u32);

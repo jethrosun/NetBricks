@@ -17,7 +17,7 @@ const VEC_SIZE: usize = 1 << 24;
 ///
 /// #[FIXME]
 /// Garbage collection.
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct CpMergeableStoreDataPath<T: AddAssign<T> + Default + Clone> {
     /// Contains the counts on the data path.
     cache: Vec<(Flow, T)>,
@@ -28,6 +28,8 @@ pub struct CpMergeableStoreDataPath<T: AddAssign<T> + Default + Clone> {
     channel: SyncSender<Vec<(Flow, T)>>,
 }
 
+/// Control plane mergeable store.
+#[derive(Debug)]
 pub struct CpMergeableStoreControlPlane<T: AddAssign<T> + Default + Clone> {
     /// The actual values.
     flow_counters: HashMap<Flow, T, XxHasher>,
@@ -48,6 +50,7 @@ impl<T: AddAssign<T> + Default + Clone> CpMergeableStoreDataPath<T> {
 }
 
 impl<T: AddAssign<T> + Default + Clone> CpMergeableStoreControlPlane<T> {
+    /// Update the internal store with the given vector.
     fn update_internal(&mut self, v: Vec<(Flow, T)>) {
         for (flow, c) in v {
             *(self.flow_counters.entry(flow).or_insert_with(Default::default)) += c;
@@ -62,6 +65,7 @@ impl<T: AddAssign<T> + Default + Clone> CpMergeableStoreControlPlane<T> {
         }
     }
 
+    /// Get the corresponding store from the flow.
     pub fn get(&self, flow: &Flow) -> T {
         match self.flow_counters.get(flow) {
             Some(i) => i.clone(),
@@ -69,14 +73,17 @@ impl<T: AddAssign<T> + Default + Clone> CpMergeableStoreControlPlane<T> {
         }
     }
 
+    /// Iter for the store.
     pub fn iter(&self) -> Iter<'_, Flow, T> {
         self.flow_counters.iter()
     }
 
+    /// Length of the store.
     pub fn len(&self) -> usize {
         self.flow_counters.len()
     }
 
+    /// Is the store empty.
     pub fn is_empty(&self) -> bool {
         self.flow_counters.is_empty()
     }

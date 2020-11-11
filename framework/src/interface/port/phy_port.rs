@@ -14,6 +14,7 @@ use std::sync::Arc;
 
 /// A DPDK based PMD port. Send and receive should not be called directly on this structure but on the port queue
 /// structure instead.
+#[derive(Debug)]
 pub struct PmdPort {
     connected: bool,
     should_close: bool,
@@ -25,7 +26,7 @@ pub struct PmdPort {
 }
 
 /// A port queue represents a single queue for a physical port, and should be used to send and receive data.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PortQueue {
     // The Arc cost here should not affect anything, since we are really not doing anything to make it go in and out of
     // scope.
@@ -114,7 +115,7 @@ impl PacketRx for PortQueue {
     }
 }
 
-// Utility function to go from Rust bools to C ints. Allowing match bools since this looks nicer to me.
+/// Utility function to go from Rust bools to C ints. Allowing match bools since this looks nicer to me.
 #[cfg_attr(feature = "dev", allow(match_bool))]
 #[inline]
 fn i32_from_bool(x: bool) -> i32 {

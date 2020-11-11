@@ -7,6 +7,12 @@ use std::hash::BuildHasherDefault;
 use std::ops::AddAssign;
 use std::sync::{Arc, RwLock, RwLockReadGuard};
 
+type FnvHash = BuildHasherDefault<FnvHasher>;
+const VEC_SIZE: usize = 1 << 10;
+const CACHE_SIZE: usize = 1 << 10;
+const MAX_CACHE_SIZE: usize = 1 << 20;
+const CHAN_SIZE: usize = 128;
+
 /// A generic store for associating some merge-able type with each flow. Note, the merge must be commutative, we do not
 /// guarantee ordering for things being merged. The merge function is implemented by implementing the
 /// [`AddAssign`](https://doc.rust-lang.org/std/ops/trait.AddAssign.html) trait and overriding the `add_assign` method
@@ -18,19 +24,14 @@ use std::sync::{Arc, RwLock, RwLockReadGuard};
 /// Garbage collection.
 /// The current version does not work well with large flow tables. The problem is we need to record a set of differences
 /// rather than copying the entire hashmap. This of course comes with some consistency issues, so we need to fix this.
-type FnvHash = BuildHasherDefault<FnvHasher>;
-const VEC_SIZE: usize = 1 << 10;
-const CACHE_SIZE: usize = 1 << 10;
-const MAX_CACHE_SIZE: usize = 1 << 20;
-const CHAN_SIZE: usize = 128;
-
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct MergeableStoreCP<T: AddAssign<T> + Default + Clone> {
     flow_counters: HashMap<Flow, T, FnvHash>,
     hashmaps: Vec<Arc<RwLock<HashMap<Flow, T, FnvHash>>>>,
 }
 
 impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
+    /// Initialize the MergeableStoreCP.
     pub fn new() -> MergeableStoreCP<T> {
         MergeableStoreCP {
             flow_counters: HashMap::with_capacity_and_hasher(VEC_SIZE << 6, Default::default()),
@@ -38,6 +39,7 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
         }
     }
 
+    /// Transform the MergeableStoreCP to MergeableStoreDP with given capacity.
     pub fn dp_store_with_cache_and_size(&mut self, cache: usize, size: usize) -> MergeableStoreDP<T> {
         let hmap = Arc::new(RwLock::new(HashMap::with_capacity_and_hasher(size, Default::default())));
         self.hashmaps.push(hmap.clone());
@@ -50,16 +52,19 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
         }
     }
 
+    /// Transform the MergeableStoreCP to MergeableStoreDP.
     pub fn dp_store(&mut self) -> MergeableStoreDP<T> {
         MergeableStoreCP::dp_store_with_cache_and_size(self, CACHE_SIZE, VEC_SIZE)
     }
 
+    /// Consume the HashMap and transform to a Vec.
     fn hmap_to_vec(hash: &RwLockReadGuard<'_, HashMap<Flow, T, FnvHash>>) -> Vec<(Flow, T)> {
         let mut t = Vec::with_capacity(hash.len());
         t.extend(hash.iter().map(|(f, v)| (*f, v.clone())));
         t
     }
 
+    /// Synchronize the MergeableStoreCP.
     pub fn sync(&mut self) {
         let mut copies: Vec<Vec<_>> = Vec::with_capacity(self.hashmaps.len());
         {
@@ -77,6 +82,7 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
         }
     }
 
+    /// Get the MergeableStoreCP.
     pub fn get(&self, flow: &Flow) -> T {
         match self.flow_counters.get(flow) {
             Some(i) => i.clone(),
@@ -84,22 +90,25 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreCP<T> {
         }
     }
 
+    /// Iterator of MergeableStoreCP.
     pub fn iter(&self) -> Iter<'_, Flow, T> {
         self.flow_counters.iter()
     }
 
+    /// Length of MergeableStoreCP.
     pub fn len(&self) -> usize {
         self.flow_counters.len()
     }
 
+    /// MergeableStoreCP is empty.
     pub fn is_empty(&self) -> bool {
         self.flow_counters.is_empty()
     }
 }
-
-#[derive(Clone)]
+/// A generic store for associating some merge-able type with each flow but with data path counts.
+/// Contains the counts on the data path.
+#[derive(Clone, Debug)]
 pub struct MergeableStoreDP<T: AddAssign<T> + Default + Clone> {
-    /// Contains the counts on the data path.
     flow_counters: Arc<RwLock<HashMap<Flow, T, FnvHash>>>,
     cache: Vec<(Flow, T)>,
     base_cache_size: usize,
@@ -150,6 +159,7 @@ impl<T: AddAssign<T> + Default + Clone> MergeableStoreDP<T> {
         self.len
     }
 
+    /// If the MergeableStoreDP is empty.
     pub fn is_empty(&self) -> bool {
         self.len != 0
     }

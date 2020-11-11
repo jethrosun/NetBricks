@@ -2,7 +2,6 @@
 ///
 /// Using _Unique types_ in the implementation of data structure for packets thus we don't need to
 /// worry about packet isolation.
-///
 use std::alloc::{alloc_zeroed, dealloc, Layout};
 use std::fmt;
 use std::mem::size_of;
@@ -15,6 +14,7 @@ unsafe fn allocate_cache_line(size: usize) -> *mut u8 {
 }
 
 /// Data structure that uses Unique Types.
+#[derive(Debug)]
 pub struct CacheAligned<T: Sized> {
     ptr: Unique<T>,
 }

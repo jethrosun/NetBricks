@@ -1,8 +1,8 @@
+//! A directory of shared structures.
 use super::{open_shared, SharedMemory};
 use crate::utils::PAGE_SIZE;
 use std::mem::size_of;
 use std::sync::atomic::*;
-/// A directory of shared structures.
 
 const MAX_LEN: usize = 256; // 255 byte names
 const DIRECTORY_PAGES: usize = 2; // Dedicate 2 pages to the directory.
@@ -10,6 +10,7 @@ const BYTE_SIZE: usize = DIRECTORY_PAGES * PAGE_SIZE;
 
 /// Directory header for shared data.
 #[repr(align(2), C)]
+#[derive(Debug)]
 pub struct DirectoryHeader {
     entries: AtomicUsize,
     // Used to signal that snapshotting is in progress.
@@ -18,11 +19,16 @@ pub struct DirectoryHeader {
     length: usize,
 }
 
+/// Directory entry for shared data.
 #[repr(packed, C)]
+#[derive(Debug)]
 pub struct DirectoryEntry {
+    /// Name of the entry.
     pub name: [u8; MAX_LEN],
 }
 
+/// A directory of shared structures.
+#[derive(Debug)]
 pub struct Directory {
     head: *mut DirectoryHeader,
     data: *mut DirectoryEntry,
@@ -33,6 +39,7 @@ pub struct Directory {
 }
 
 impl Directory {
+    /// Initialize the directory.
     pub fn new(name: &str) -> Directory {
         unsafe {
             let shared = open_shared(name, BYTE_SIZE);
@@ -55,6 +62,7 @@ impl Directory {
         }
     }
 
+    /// Register a new entry.
     pub fn register_new_entry(&mut self, name: &str) -> Option<usize> {
         let entry = self.entry;
         if entry >= self.len || name.len() >= MAX_LEN {
@@ -70,6 +78,7 @@ impl Directory {
         }
     }
 
+    /// Begin the directory.
     #[inline]
     pub fn begin_snapshot(&mut self) {
         unsafe {
@@ -77,6 +86,7 @@ impl Directory {
         }
     }
 
+    /// End the directory.
     #[inline]
     pub fn end_snapshot(&mut self) {
         unsafe {
