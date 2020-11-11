@@ -7,7 +7,6 @@ use std::sync::Arc;
 use std::thread;
 
 /// Used to keep stats about each pipeline and eventually grant tokens, etc.
-#[derive(Debug)]
 struct Runnable {
     pub task: Box<dyn Executable>,
     pub cycles: u64,
@@ -32,7 +31,6 @@ impl Runnable {
 }
 
 /// A very simple round-robin scheduler. This should really be more of a DRR scheduler.
-#[derive(Debug)]
 pub struct StandaloneScheduler {
     /// The set of runnable items. Note we currently don't have a blocked queue.
     run_q: Vec<Runnable>,
@@ -47,18 +45,23 @@ pub struct StandaloneScheduler {
 }
 
 /// Messages that can be sent on the scheduler channel to add or remove tasks.
-#[derive(Debug)]
 pub enum SchedulerCommand {
+    /// Add command.
     Add(Box<dyn Executable + Send>),
+    /// Run command.
     Run(Arc<dyn Fn(&mut StandaloneScheduler) + Send + Sync>),
+    /// Execute command.
     Execute,
+    /// Shutdown command.
     Shutdown,
+    /// Handshake command.
     Handshake(SyncSender<bool>),
 }
 
 const DEFAULT_Q_SIZE: usize = 256;
 
 impl Default for StandaloneScheduler {
+    /// Initialize a default StandaloneScheduler.
     fn default() -> StandaloneScheduler {
         StandaloneScheduler::new()
     }
@@ -73,15 +76,18 @@ impl Scheduler for StandaloneScheduler {
 }
 
 impl StandaloneScheduler {
+    /// Initialize a StandaloneScheduler.
     pub fn new() -> StandaloneScheduler {
         let (_, receiver) = sync_channel(0);
         StandaloneScheduler::new_with_channel(receiver)
     }
 
+    /// Initialize a StandaloneScheduler with channel.
     pub fn new_with_channel(channel: Receiver<SchedulerCommand>) -> StandaloneScheduler {
         StandaloneScheduler::new_with_channel_and_capacity(channel, DEFAULT_Q_SIZE)
     }
 
+    /// Initialize a StandaloneScheduler with channel and capacity.
     pub fn new_with_channel_and_capacity(channel: Receiver<SchedulerCommand>, capacity: usize) -> StandaloneScheduler {
         StandaloneScheduler {
             run_q: Vec::with_capacity(capacity),
@@ -92,6 +98,7 @@ impl StandaloneScheduler {
         }
     }
 
+    /// Handle one request and then exit.
     fn handle_request(&mut self, request: SchedulerCommand) {
         match request {
             SchedulerCommand::Add(ex) => self.run_q.push(Runnable::from_boxed_task(ex)),
@@ -108,6 +115,7 @@ impl StandaloneScheduler {
         }
     }
 
+    /// Handle the requests and then exit.
     pub fn handle_requests(&mut self) {
         self.shutdown = false;
         // Note this rather bizarre structure here to get shutting down hooked in.
@@ -126,6 +134,7 @@ impl StandaloneScheduler {
         );
     }
 
+    /// Run the scheduling.
     #[inline]
     fn execute_internal(&mut self, begin: u64) -> u64 {
         let time = {
@@ -160,6 +169,7 @@ impl StandaloneScheduler {
         }
     }
 
+    /// Run the scheduling once.
     pub fn execute_one(&mut self) {
         if !self.run_q.is_empty() {
             self.execute_internal(utils::rdtsc_unsafe());
