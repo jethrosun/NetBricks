@@ -1,10 +1,10 @@
 //! A New NFV framework that tries to provide optimization to developers and isolation between NFs.
-#![deny(missing_docs)]
-#![warn(
+// #![deny(missing_docs)]
+#![deny(
     missing_docs,
     rust_2018_idioms,
     missing_debug_implementations,
-    intra_doc_link_resolution_failure
+    broken_intra_doc_links
 )]
 #![recursion_limit = "1024"]
 #![feature(llvm_asm)]
@@ -25,30 +25,32 @@
 #![cfg_attr(feature = "dev", feature(plugin))]
 #![cfg_attr(feature = "dev", plugin(clippy))]
 
-extern crate byteorder;
-extern crate fnv;
+// extern crate getopts;
+
 #[macro_use]
 extern crate lazy_static;
-extern crate libc;
-extern crate net2;
-extern crate regex;
-#[cfg(feature = "sctp")]
-extern crate sctp;
-extern crate twox_hash;
-// TOML for scheduling configuration
-extern crate toml;
-// UUID for SHM naming
-extern crate uuid;
-
-// For cache aware allocation
-extern crate alloc;
 
 // Better error handling.
 #[macro_use]
 extern crate error_chain;
 
-#[cfg(unix)]
-extern crate nix;
+// #[cfg(feature = "sctp")]
+// extern crate sctp;
+
+// extern crate byteorder;
+// extern crate fnv;
+// extern crate libc;
+// extern crate net2;
+// extern crate regex;
+// extern crate twox_hash;
+// TOML for scheduling configuration
+// extern crate toml;
+// UUID for SHM naming
+// extern crate uuid;
+// For cache aware allocation
+// extern crate alloc;
+// #[cfg(unix)]
+// extern crate nix;
 
 pub mod allocators;
 pub mod common;
