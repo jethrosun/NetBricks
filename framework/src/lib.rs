@@ -1,5 +1,11 @@
 //! A New NFV framework that tries to provide optimization to developers and isolation between NFs.
-
+#![deny(missing_docs)]
+#![warn(
+    missing_docs,
+    rust_2018_idioms,
+    missing_debug_implementations,
+    intra_doc_link_resolution_failure
+)]
 #![recursion_limit = "1024"]
 #![feature(llvm_asm)]
 #![feature(log_syntax)]
@@ -18,8 +24,7 @@
 // Need this since PMD port construction triggers too many arguments.
 #![cfg_attr(feature = "dev", feature(plugin))]
 #![cfg_attr(feature = "dev", plugin(clippy))]
-// Try to deny missing doc?
-#![deny(missing_docs)]
+
 extern crate byteorder;
 extern crate fnv;
 #[macro_use]
@@ -44,17 +49,12 @@ extern crate error_chain;
 
 #[cfg(unix)]
 extern crate nix;
-#[doc(hidden)]
+
 pub mod allocators;
-#[doc(hidden)]
 pub mod common;
-#[doc(hidden)]
 pub mod config;
-#[doc(hidden)]
 pub mod control;
-#[doc(hidden)]
 pub mod headers;
-#[doc(hidden)]
 pub mod interface;
 
 #[allow(dead_code)]
@@ -62,16 +62,9 @@ mod native;
 mod native_include;
 
 pub mod operators;
-#[doc(hidden)]
-pub mod state;
-
-#[doc(hidden)]
 pub mod pvn;
-#[doc(hidden)]
 pub mod queues;
-#[doc(hidden)]
 pub mod scheduler;
-#[doc(hidden)]
 pub mod shared_state;
-#[doc(hidden)]
+pub mod state;
 pub mod utils;
