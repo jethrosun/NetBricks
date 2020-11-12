@@ -1,3 +1,6 @@
+/// Currently NetBricks uses error chain for reporting errors, we probably
+/// should reimplement with failure as [error_chain is
+/// deprecated](https://github.com/rust-lang-nursery/failure/issues/181).
 error_chain! {
     errors {
         FailedAllocation {

@@ -5,9 +5,11 @@ use std::fmt;
 use std::hash::Hash;
 use std::hash::Hasher;
 
-#[derive(Default)]
+/// MAC address.
+#[derive(Debug, Default)]
 #[repr(C, packed)]
 pub struct MacAddress {
+    /// Address.
     pub addr: [u8; 6],
 }
 
@@ -22,18 +24,21 @@ impl fmt::Display for MacAddress {
 }
 
 impl MacAddress {
+    /// Initialize the MAC address.
     pub fn new(a: u8, b: u8, c: u8, d: u8, e: u8, f: u8) -> MacAddress {
         MacAddress {
             addr: [a, b, c, d, e, f],
         }
     }
 
+    /// Initialize MAC address with the *slice*.
     pub fn new_from_slice(slice: &[u8]) -> MacAddress {
         MacAddress {
             addr: [slice[0], slice[1], slice[2], slice[3], slice[4], slice[5]],
         }
     }
 
+    /// Copy the MAC address.
     #[inline]
     pub fn copy_address(&mut self, other: &MacAddress) {
         self.addr.copy_from_slice(&other.addr);
@@ -46,6 +51,7 @@ impl Clone for MacAddress {
         m.addr.copy_from_slice(&self.addr);
         m
     }
+
     fn clone_from(&mut self, source: &MacAddress) {
         self.addr.copy_from_slice(&source.addr)
     }
@@ -69,7 +75,9 @@ impl Hash for MacAddress {
 #[derive(Default)]
 #[repr(C, packed)]
 pub struct MacHeader {
+    /// Dst MAC address.
     pub dst: MacAddress,
+    /// Src MAC address.
     pub src: MacAddress,
     etype: u16,
 }
@@ -116,20 +124,24 @@ impl EndOffset for MacHeader {
 }
 
 impl MacHeader {
+    /// Initialize a default MAC header.
     pub fn new() -> Self {
         Default::default()
     }
 
+    /// Get the etype from MAC header.
     #[inline]
     pub fn etype(&self) -> u16 {
         u16::from_be(self.etype)
     }
 
+    /// Set the etype from MAC header.
     #[inline]
     pub fn set_etype(&mut self, etype: u16) {
         self.etype = u16::to_be(etype)
     }
 
+    /// Swap the src and dst address.
     #[inline]
     pub fn swap_addresses(&mut self) {
         let mut src: MacAddress = Default::default();

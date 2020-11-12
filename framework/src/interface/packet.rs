@@ -57,6 +57,7 @@ fn reference_mbuf(mbuf: *mut MBuf) {
     unsafe { (*mbuf).reference() };
 }
 
+/// Size of metadata slots.
 pub const METADATA_SLOTS: u16 = 16;
 const HEADER_SLOT: usize = 0;
 const OFFSET_SLOT: usize = HEADER_SLOT + 1;
@@ -187,6 +188,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         MBuf::write_metadata_slot(self.mbuf, STACK_OFFSET_SLOT + depth, offset)
     }
 
+    /// Reset the stack offset.
     #[inline]
     pub fn reset_stack_offset(&mut self) {
         self.write_stack_depth(0)
@@ -218,6 +220,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Free all the packets.
     #[inline]
     pub fn free_packet(self) {
         if !self.mbuf.is_null() {
@@ -292,6 +295,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         unsafe { &mut (*(self.header())) }
     }
 
+    /// Read metadata.
     #[inline]
     pub fn read_metadata(&self) -> &M {
         assert!(size_of::<M>() < FREEFORM_METADATA_SIZE);
@@ -301,6 +305,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Write metadata.
     #[inline]
     pub fn write_metadata<M2: Sized + Send>(&mut self, metadata: &M2) -> Result<()> {
         if size_of::<M2>() >= FREEFORM_METADATA_SIZE {
@@ -314,6 +319,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Reinterpret metadata.
     #[inline]
     pub fn reinterpret_metadata<M2: Sized + Send>(mut self) -> Packet<T, M2> {
         let hdr = self.header();
@@ -378,6 +384,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Remove *size* off from the payload tail.
     #[inline]
     pub fn remove_from_payload_tail(&mut self, size: usize) -> Result<()> {
         unsafe {
@@ -386,6 +393,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Add *size* to the payload tail.
     #[inline]
     pub fn add_to_payload_tail(&mut self, size: usize) -> Result<()> {
         unsafe {
@@ -398,6 +406,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Write header and offset.
     #[inline]
     pub fn write_header<T2: EndOffset + Sized>(&mut self, header: &T2, offset: usize) -> Result<()> {
         if offset > self.payload_size() {
@@ -411,6 +420,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Parse header.
     #[inline]
     pub fn parse_header<T2: EndOffset<PreviousHeader = T>>(mut self) -> Packet<T2, M> {
         unsafe {
@@ -421,6 +431,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Parse header and record.
     #[inline]
     pub fn parse_header_and_record<T2: EndOffset<PreviousHeader = T>>(mut self) -> Packet<T2, M> {
         unsafe {
@@ -434,6 +445,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Restore saved header.
     #[inline]
     pub fn restore_saved_header<T2: EndOffset, M2: Sized + Send>(mut self) -> Option<Packet<T2, M2>> {
         unsafe {
@@ -447,6 +459,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Replace header with given *hdr*.
     #[inline]
     pub fn replace_header(&mut self, hdr: &T) {
         unsafe {
@@ -454,6 +467,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Deparse the header.
     #[inline]
     pub fn deparse_header(mut self, offset: usize) -> Packet<T::PreviousHeader, M> {
         let offset = offset as isize;
@@ -464,11 +478,13 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Deparse the header stack.
     #[inline]
     pub fn deparse_header_stack(mut self) -> Option<Packet<T::PreviousHeader, M>> {
         self.pop_offset().map(|offset| self.deparse_header(offset))
     }
 
+    /// Reset.
     #[inline]
     pub fn reset(mut self) -> Packet<NullHeader, EmptyMetadata> {
         unsafe {
@@ -477,6 +493,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Get the mutable payload.
     #[inline]
     pub fn get_mut_payload(&mut self) -> &mut [u8] {
         unsafe {
@@ -486,6 +503,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Get the payload (not mutable).
     #[inline]
     pub fn get_payload(&self) -> &[u8] {
         unsafe {
@@ -503,16 +521,21 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// Increase payload size by *increase_by*.
     #[inline]
     pub fn increase_payload_size(&mut self, increase_by: usize) -> usize {
         unsafe { (*self.mbuf).add_data_end(increase_by) }
     }
 
+    /// Trim the payload by *trim_by*.
     #[inline]
     pub fn trim_payload_size(&mut self, trim_by: usize) -> usize {
         unsafe { (*self.mbuf).remove_data_end(trim_by) }
     }
 
+    /// Copy the payload.
+    ///
+    /// FIXME: safety
     #[inline]
     pub fn copy_payload(&mut self, other: &Self) -> usize {
         let copy_len = other.payload_size();
@@ -534,6 +557,7 @@ impl<T: EndOffset, M: Sized + Send> Packet<T, M> {
         }
     }
 
+    /// refcnt
     #[inline]
     pub fn refcnt(&self) -> u16 {
         unsafe { (*self.mbuf).refcnt() }

@@ -7,12 +7,14 @@ use std::fmt;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 
+/// Virtual Port.
 #[derive(Debug)]
 pub struct VirtualPort {
     stats_rx: Arc<CacheAligned<PortStats>>,
     stats_tx: Arc<CacheAligned<PortStats>>,
 }
 
+/// Virtual Queue.
 #[derive(Clone, Debug)]
 pub struct VirtualQueue {
     stats_rx: Arc<CacheAligned<PortStats>>,
@@ -53,6 +55,7 @@ impl PacketRx for VirtualQueue {
 }
 
 impl VirtualPort {
+    /// Initialize the Virtual Port.
     pub fn new(_queues: i32) -> Result<Arc<VirtualPort>> {
         Ok(Arc::new(VirtualPort {
             stats_rx: Arc::new(PortStats::new()),
@@ -60,6 +63,7 @@ impl VirtualPort {
         }))
     }
 
+    /// Initialize the Virtual Queue for the Virtual Port.
     pub fn new_virtual_queue(&self, _queue: i32) -> Result<CacheAligned<VirtualQueue>> {
         Ok(CacheAligned::allocate(VirtualQueue {
             stats_rx: self.stats_rx.clone(),

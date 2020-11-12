@@ -8,7 +8,7 @@ use crate::interface::*;
 use std::marker::PhantomData;
 
 /// Restore header.
-// TODO:doc
+#[derive(Debug)]
 pub struct RestoreHeader<T, M, V>
 where
     T: EndOffset + 'static,

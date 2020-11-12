@@ -4,14 +4,21 @@ use std::fs::File;
 use std::io::Read;
 use toml::{self, Value};
 
-/// Default configuration values
+/// Default pool size.
 pub const DEFAULT_POOL_SIZE: u32 = 2048 - 1;
+/// Default cache size.
 pub const DEFAULT_CACHE_SIZE: u32 = 32;
+/// Default secondary value.
 pub const DEFAULT_SECONDARY: bool = false;
+/// Default primary core.
 pub const DEFAULT_PRIMARY_CORE: i32 = 0;
+/// Default running name.
 pub const DEFAULT_NAME: &str = "zcsi";
+/// Default duration.
 pub const DEFAULT_DURATION: Option<u64> = None;
+/// Default number of RXD.
 pub const NUM_RXD: i32 = 128;
+/// Default number of TXD.
 pub const NUM_TXD: i32 = 128;
 
 /// Read a TOML stub and figure out the port.

@@ -1,3 +1,5 @@
+//! Headers.
+
 pub use self::ip::*;
 pub use self::mac::*;
 pub use self::null_header::*;
@@ -11,6 +13,7 @@ mod udp;
 
 /// A trait implemented by all headers, used for reading them from a mbuf.
 pub trait EndOffset: Send {
+    /// Previous header.
     type PreviousHeader: EndOffset;
 
     /// Offset returns the number of bytes to skip to get to the next header, relative to the start
@@ -24,5 +27,6 @@ pub trait EndOffset: Send {
     /// explicit length field.
     fn payload_size(&self, hint: usize) -> usize;
 
+    /// Check if correct.
     fn check_correct(&self, prev: &Self::PreviousHeader) -> bool;
 }

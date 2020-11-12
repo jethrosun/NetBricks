@@ -1,3 +1,6 @@
+//! A multiproducer single consumer queue for mbufs. The main difference when compared to `std::sync::mpsc` is that this
+//! does not use a linked list (to avoid allocation). The hope is to eventually turn this into something that can carry
+//! `Packets` or sufficient metadata to reconstruct that structure.
 use crate::common::*;
 use crate::headers::EndOffset;
 use crate::interface::{Packet, PacketRx};
@@ -10,7 +13,7 @@ use std::default::Default;
 use std::sync::atomic::{AtomicPtr, AtomicUsize, Ordering};
 use std::sync::Arc;
 
-#[derive(Default)]
+#[derive(Debug, Default)]
 struct QueueMetadata {
     pub head: AtomicUsize,
     pub tail: AtomicUsize,
@@ -19,6 +22,7 @@ struct QueueMetadata {
 /// A multiproducer single consumer queue for mbufs. The main difference when compared to `std::sync::mpsc` is that this
 /// does not use a linked list (to avoid allocation). The hope is to eventually turn this into something that can carry
 /// `Packets` or sufficient metadata to reconstruct that structure.
+#[derive(Debug)]
 struct MpscQueue {
     slots: usize, // Must be a power of 2
     mask: usize,  // slots - 1
@@ -30,6 +34,7 @@ struct MpscQueue {
 }
 
 impl MpscQueue {
+    /// Initialize the MpscQueue with given size.
     pub fn new(size: usize) -> MpscQueue {
         let slots = if size & (size - 1) != 0 {
             round_to_power_of_2(size)
@@ -46,12 +51,13 @@ impl MpscQueue {
         }
     }
 
-    // This assumes that no producers are currently active.
+    /// This assumes that no producers are currently active.
     #[inline]
     pub fn reference_producers(&self) {
         self.n_producers.fetch_add(1, Ordering::AcqRel);
     }
 
+    /// Enqueue the mbuf from position.
     #[inline]
     fn enqueue_mbufs(&self, start: usize, enqueue: usize, mbufs: &[*mut MBuf]) {
         let mask = self.mask;
@@ -74,6 +80,7 @@ impl MpscQueue {
         }
     }
 
+    /// Enqueue with mbuf.
     #[inline]
     pub fn enqueue(&self, mbufs: &[*mut MBuf]) -> usize {
         let producers = self.n_producers.load(Ordering::Acquire);
@@ -85,8 +92,8 @@ impl MpscQueue {
         }
     }
 
-    // In the mp only version lots of time was being consumed in CAS. We want to allow for the mp case, but there is no
-    // need to waste cycles.
+    /// In the mp only version lots of time was being consumed in CAS. We want to allow for the mp case, but there is no
+    /// need to waste cycles.
     #[inline]
     fn enqueue_sp(&self, mbufs: &[*mut MBuf]) -> usize {
         let len = mbufs.len();
@@ -157,6 +164,7 @@ impl MpscQueue {
         }
     }
 
+    /// Enqueue one.
     #[inline]
     pub fn enqueue_one(&self, mbuf: *mut MBuf) -> bool {
         self.enqueue(&[mbuf]) == 1
@@ -184,6 +192,7 @@ impl MpscQueue {
         }
     }
 
+    /// Dequeue.
     #[inline]
     pub fn dequeue(&self, mbufs: &mut [*mut MBuf]) -> usize {
         // NOTE: This is a single consumer dequeue as assumed by this queue.
@@ -203,6 +212,8 @@ impl MpscQueue {
     }
 }
 
+/// MpscQueue producer.
+#[derive(Debug)]
 pub struct MpscProducer {
     mpsc_queue: Arc<MpscQueue>,
 }
@@ -217,16 +228,20 @@ impl Clone for MpscProducer {
 }
 
 impl MpscProducer {
+    /// Enqueue.
     pub fn enqueue<T: EndOffset, M: Sized + Send>(&self, packets: &mut Vec<Packet<T, M>>) -> usize {
         let mbufs: Vec<_> = packets.drain(..).map(|p| unsafe { p.get_mbuf() }).collect();
         self.mpsc_queue.enqueue(&mbufs[..])
     }
 
+    /// Enqueue one.
     pub fn enqueue_one<T: EndOffset, M: Sized + Send>(&self, packet: Packet<T, M>) -> bool {
         unsafe { self.mpsc_queue.enqueue_one(packet.get_mbuf()) }
     }
 }
 
+/// MpscQueue consumer.
+#[derive(Debug)]
 pub struct MpscConsumer {
     mpsc_queue: Arc<MpscQueue>,
 }
@@ -238,6 +253,7 @@ impl PacketRx for MpscConsumer {
     }
 }
 
+/// Initialize MpscQueue pair with size.
 pub fn new_mpsc_queue_pair_with_size(size: usize) -> (MpscProducer, ReceiveBatch<MpscConsumer>) {
     let mpsc_q = Arc::new(MpscQueue::new(size));
     mpsc_q.reference_producers();
@@ -251,6 +267,7 @@ pub fn new_mpsc_queue_pair_with_size(size: usize) -> (MpscProducer, ReceiveBatch
 
 const DEFAULT_QUEUE_SIZE: usize = 1024;
 
+/// Initialize MpscQueue pair.
 pub fn new_mpsc_queue_pair() -> (MpscProducer, ReceiveBatch<MpscConsumer>) {
     new_mpsc_queue_pair_with_size(DEFAULT_QUEUE_SIZE)
 }

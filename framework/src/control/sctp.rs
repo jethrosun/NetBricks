@@ -1,7 +1,8 @@
+//! SCTP Connections.
+
 use super::{Available, IOScheduler, PollHandle, PollScheduler, Token, HUP, READ, WRITE};
 use crate::scheduler::Executable;
 use fnv::FnvHasher;
-/// SCTP Connections.
 use sctp::*;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
@@ -9,14 +10,21 @@ use std::marker::PhantomData;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::os::unix::io::AsRawFd;
 
+/// SCTP control agent.
 pub trait SctpControlAgent {
+    /// Initialize SCTP control agent.
     fn new(address: SocketAddr, stream: SctpStream, scheduler: IOScheduler) -> Self;
+    /// Is read ready.
     fn handle_read_ready(&mut self) -> bool;
+    /// Is write ready.
     fn handle_write_ready(&mut self) -> bool;
+    /// Is HUP.
     fn handle_hup(&mut self) -> bool;
 }
 
 type FnvHash = BuildHasherDefault<FnvHasher>;
+
+/// SCTP control server.
 pub struct SctpControlServer<T: SctpControlAgent> {
     listener: SctpListener,
     scheduler: PollScheduler,
@@ -40,6 +48,7 @@ impl<T: SctpControlAgent> Executable for SctpControlServer<T> {
 
 // FIXME: Add one-to-many SCTP support?
 impl<T: SctpControlAgent> SctpControlServer<T> {
+    /// Initialize SCTP control server.
     pub fn new_streaming<A: ToSocketAddrs>(address: A) -> SctpControlServer<T> {
         let listener = SctpListener::bind(address).unwrap();
         listener.set_nonblocking(true).unwrap();
@@ -63,6 +72,7 @@ impl<T: SctpControlAgent> SctpControlServer<T> {
         self.handle.schedule_read(&self.listener, self.listener_token);
     }
 
+    /// Schedule for SCTP control server.
     pub fn schedule(&mut self) {
         match self.scheduler.get_token_noblock() {
             Some((token, avail)) if token == self.listener_token => {

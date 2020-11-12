@@ -1,3 +1,6 @@
+//! This scheduler is designed to allow NetBricks to be embedded in other vswitches (e.g., Bess). As a result it neither
+//! does any of the resource accounting `Scheduler` attempts to do at the moment, nor does it have anything that just
+//! runs tasks in a loop.
 use super::{Executable, Scheduler};
 use crate::common::*;
 use std::default::Default;

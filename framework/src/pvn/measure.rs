@@ -1,3 +1,4 @@
+//! Utils functions for measuring the PVN NFs.
 use crate::utils::Flow;
 use serde_json::{from_reader, Value};
 use statrs::statistics::OrderStatistics;
@@ -7,15 +8,21 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::time::Instant;
 
+/// Epsilon.
 pub const EPSILON: usize = 1000;
+/// Number of packets to ignore before starting measurement. Currently deprecated.
 pub const NUM_TO_IGNORE: usize = 0;
-// pub const TOTAL_MEASURED_PKT: usize = 300_000_000;
+/// Estimated number of packets for allocating large size array.
 pub const TOTAL_MEASURED_PKT: usize = 100_000_000;
+// pub const TOTAL_MEASURED_PKT: usize = 300_000_000;
 
-// pub const INST_MEASURE_TIME: u64 = 60;
+/// Time for the Inst experiment.
 pub const INST_MEASURE_TIME: u64 = 601;
+// pub const INST_MEASURE_TIME: u64 = 60;
+/// Time for the App experiment.
 pub const APP_MEASURE_TIME: u64 = 610;
 
+/// Fake flow when retrieving flow failed.
 pub fn fake_flow() -> Flow {
     Flow {
         src_ip: 0 as u32,

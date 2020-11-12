@@ -1,7 +1,7 @@
-/// Core part of Zero-Copy Software Isolation.
-///
-/// Using _Unique types_ in the implementation of data structure for packets thus we don't need to
-/// worry about packet isolation.
+//! Core part of Zero-Copy Software Isolation.
+//!
+//! Using _Unique types_ in the implementation of data structure for packets thus we don't need to
+//! worry about packet isolation.
 use std::alloc::{alloc_zeroed, dealloc, Layout};
 use std::fmt;
 use std::mem::size_of;
@@ -44,6 +44,7 @@ impl<T: Sized> DerefMut for CacheAligned<T> {
 }
 
 impl<T: Sized> CacheAligned<T> {
+    /// Allocate CacheAligned with unique pointer.
     pub fn allocate(src: T) -> CacheAligned<T> {
         unsafe {
             let alloc = allocate_cache_line(size_of::<T>()) as *mut T;

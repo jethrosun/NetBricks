@@ -8,11 +8,9 @@ use crate::interface::PacketTx;
 use std::marker::PhantomData;
 
 /// Mutable metadata function.
-// TODO:doc
 pub type MutableMetadataFn<T, M, M2> = Box<dyn FnMut(&mut Packet<T, M>) -> M2 + Send>;
 
 /// Mutable metadata batch.
-// TODO:doc
 pub struct MutableAddMetadataBatch<M, V>
 where
     M: Send + Sized,

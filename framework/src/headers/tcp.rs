@@ -3,6 +3,7 @@ use crate::headers::IpHeader;
 use std::default::Default;
 use std::fmt;
 
+/// TCP header.
 #[derive(Default)]
 #[repr(C, packed)]
 pub struct TcpHeader {
@@ -87,56 +88,67 @@ impl EndOffset for TcpHeader {
 }
 
 impl TcpHeader {
+    /// Initialize a default TCP header.
     #[inline]
     pub fn new() -> TcpHeader {
         Default::default()
     }
 
+    /// Initialize src port for the TCP header.
     #[inline]
     pub fn src_port(&self) -> u16 {
         u16::from_be(self.src_port)
     }
 
+    /// Initialize dst port for the TCP header.
     #[inline]
     pub fn dst_port(&self) -> u16 {
         u16::from_be(self.dst_port)
     }
 
+    /// Set src port for the TCP header.
     #[inline]
     pub fn set_src_port(&mut self, port: u16) {
         self.src_port = u16::to_be(port);
     }
 
+    /// Set dst port for the TCP header.
     #[inline]
     pub fn set_dst_port(&mut self, port: u16) {
         self.dst_port = u16::to_be(port);
     }
 
+    /// Get the seq number from the TCP header.
     #[inline]
     pub fn seq_num(&self) -> u32 {
         u32::from_be(self.seq)
     }
 
+    /// Set the seq number for the TCP header.
     #[inline]
     pub fn set_seq_num(&mut self, seq: u32) {
         self.seq = u32::to_be(seq);
     }
 
+    /// Get the ACK number from the TCP header.
     #[inline]
     pub fn ack_num(&self) -> u32 {
         u32::from_be(self.ack)
     }
 
+    /// Set the ACK number for the TCP header.
     #[inline]
     pub fn set_ack_num(&mut self, ack: u32) {
         self.ack = u32::to_be(ack);
     }
 
+    /// Get the data offset from the TCP header.
     #[inline]
     pub fn data_offset(&self) -> u8 {
         (self.offset_to_ns & 0xf0) >> 4
     }
 
+    /// Set the data offset for the TCP header.
     #[inline]
     pub fn set_data_offset(&mut self, offset: u8) {
         self.offset_to_ns = (self.offset_to_ns & 0x0f) | (offset << 4);
@@ -150,11 +162,13 @@ impl TcpHeader {
         (self.offset_to_ns & 0x01) == 1
     }
 
+    /// Set the ECN bit.
     #[inline]
     pub fn set_ns(&mut self) {
         self.offset_to_ns |= 1
     }
 
+    /// Unset the ECN bit.
     #[inline]
     pub fn unset_ns(&mut self) {
         self.offset_to_ns &= !0x1
@@ -305,6 +319,7 @@ impl TcpHeader {
         self.flags &= !FIN;
     }
 
+    /// Format flag.
     pub fn fmt_flags(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write_or_return!(f, "| ");
         if self.ns_flag() {
@@ -338,31 +353,33 @@ impl TcpHeader {
     }
     // END FLAGS
 
-    /// Receive window.
+    /// Receive window size.
     pub fn window_size(&self) -> u16 {
         u16::from_be(self.window)
     }
 
+    /// Set the receive window size.
     pub fn set_window_size(&mut self, wnd: u16) {
         self.window = u16::to_be(wnd);
     }
 
-    /// Checksum
+    /// Get checksum.
     pub fn checksum(&self) -> u16 {
         u16::from_be(self.csum)
     }
 
+    /// Set the checksum.
     // FIXME: Validate checksum and update checksum
-
     pub fn set_checksum(&mut self, csum: u16) {
         self.csum = u16::to_be(csum)
     }
 
-    /// Urgent pointer
+    /// Get the urgent pointer.
     pub fn urgent(&self) -> u16 {
         u16::from_be(self.urgent)
     }
 
+    /// Set the urgent pointer.
     pub fn set_urgent(&mut self, urgent: u16) {
         self.urgent = u16::to_be(urgent);
     }

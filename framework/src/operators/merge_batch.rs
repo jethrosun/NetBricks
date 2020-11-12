@@ -11,6 +11,7 @@ use std::cmp;
 ///
 /// MergeBatch provides a node where separate processing branches can be merged together. All
 /// packets entering a merge node exit as a single group.
+#[derive(Debug)]
 pub struct MergeBatch<T: Batch> {
     parents: Vec<T>,
     which: usize,

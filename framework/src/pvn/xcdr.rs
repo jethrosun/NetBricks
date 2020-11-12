@@ -1,3 +1,4 @@
+//! Utils functions for the PVN Transcoder NF.
 use serde_json::{from_reader, Value};
 use std::collections::HashMap;
 use std::fs::File;

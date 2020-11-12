@@ -1,6 +1,7 @@
 use super::EndOffset;
 use std::fmt;
 
+/// Null header.
 #[derive(Default)]
 #[repr(C, packed)]
 pub struct NullHeader;

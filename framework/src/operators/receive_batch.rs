@@ -7,7 +7,7 @@ use crate::headers::NullHeader;
 use crate::interface::{PacketRx, PacketTx};
 
 /// Receive batch.
-// TODO:doc
+#[derive(Debug)]
 pub struct ReceiveBatch<T: PacketRx> {
     parent: PacketBatch,
     queue: T,

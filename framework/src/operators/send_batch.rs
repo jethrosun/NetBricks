@@ -8,7 +8,7 @@ use crate::interface::PacketTx;
 use crate::scheduler::Executable;
 
 /// Send batch.
-// TODO:doc
+#[derive(Debug)]
 pub struct SendBatch<Port, V>
 where
     Port: PacketTx,

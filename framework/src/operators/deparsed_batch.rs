@@ -10,6 +10,7 @@ use crate::interface::*;
 ///
 /// DeparsedBatch pops the bottom most header from the packet's header stack and returns it to the
 /// payload.
+#[derive(Debug)]
 pub struct DeparsedBatch<V>
 where
     V: Batch + BatchIterator + Act,

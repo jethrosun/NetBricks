@@ -1,3 +1,4 @@
+//! Utils functions for the PVN RDR NF.
 use crate::pvn::unresolvable::curate_unresolvable_records;
 use serde_json::{from_reader, Value};
 use std::collections::HashMap;
@@ -78,6 +79,7 @@ pub fn rdr_retrieve_users(rdr_setup: String) -> Option<usize> {
     map.remove(&*rdr_setup)
 }
 
+/// Read the pregenerated randomness seed from file.
 pub fn rdr_read_rand_seed(num_of_users: usize, iter: String) -> Result<Vec<i64>> {
     let rand_seed_file = "/home/jethros/dev/pvn/utils/rand_number/rand.json";
     let mut rand_vec = Vec::new();

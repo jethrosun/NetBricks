@@ -13,7 +13,6 @@ use std::marker::PhantomData;
 pub type MapFn<T, M> = Box<dyn FnMut(&Packet<T, M>) + Send>;
 
 /// Map batch.
-// TODO:doc
 pub struct MapBatch<T, V>
 where
     T: EndOffset,

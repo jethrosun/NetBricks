@@ -1,7 +1,7 @@
+//! TCP connection.
 use super::{Available, IOScheduler, PollHandle, PollScheduler, Token, HUP, READ, WRITE};
 use crate::scheduler::Executable;
 use fnv::FnvHasher;
-/// TCP connection.
 use net2::TcpBuilder;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
@@ -9,14 +9,21 @@ use std::marker::PhantomData;
 use std::net::*;
 use std::os::unix::io::AsRawFd;
 
+/// TCP control agent.
 pub trait TcpControlAgent {
+    /// Initialize TCP control agent.
     fn new(address: SocketAddr, stream: TcpStream, scheduler: IOScheduler) -> Self;
+    /// Is read ready.
     fn handle_read_ready(&mut self) -> bool;
+    /// Is write ready.
     fn handle_write_ready(&mut self) -> bool;
+    /// Is HUP.
     fn handle_hup(&mut self) -> bool;
 }
 
 type FnvHash = BuildHasherDefault<FnvHasher>;
+
+/// TCP control server.
 pub struct TcpControlServer<T: TcpControlAgent> {
     listener: TcpListener,
     scheduler: PollScheduler,
@@ -39,6 +46,7 @@ impl<T: TcpControlAgent> Executable for TcpControlServer<T> {
 }
 
 impl<T: TcpControlAgent> TcpControlServer<T> {
+    /// Initialize TCP control server.
     pub fn new(address: SocketAddr) -> TcpControlServer<T> {
         let socket = match address {
             SocketAddr::V4(_) => TcpBuilder::new_v4(),
@@ -65,6 +73,7 @@ impl<T: TcpControlAgent> TcpControlServer<T> {
         }
     }
 
+    /// Initialize schedule for TCP control server.
     pub fn schedule(&mut self) {
         match self.scheduler.get_token_noblock() {
             Some((token, avail)) if token == self.listener_token => {

@@ -1,3 +1,5 @@
+//! Configuration options for NetBricks.
+
 pub use self::config_reader::*;
 pub use self::flag_reader::*;
 use std::fmt;
@@ -101,8 +103,11 @@ pub struct PortConfiguration {
     pub rxd: i32,
     /// Number of TX descriptors to use.
     pub txd: i32,
+    /// Loopback option.
     pub loopback: bool,
+    /// TCP segmentation offload option.
     pub tso: bool,
+    /// TCP checksum option.
     pub csum: bool,
 }
 
@@ -122,6 +127,7 @@ impl Default for PortConfiguration {
 }
 
 impl PortConfiguration {
+    /// Initialize PortConfiguration from name.
     pub fn new_with_name(name: &str) -> PortConfiguration {
         PortConfiguration {
             name: String::from(name),
@@ -129,6 +135,7 @@ impl PortConfiguration {
         }
     }
 
+    /// Initialize PortConfiguration from name, rx queues and tx queues.
     pub fn new_with_queues(name: &str, rx_queues: &[i32], tx_queues: &[i32]) -> PortConfiguration {
         PortConfiguration {
             rx_queues: Vec::from(rx_queues),

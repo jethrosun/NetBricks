@@ -1,3 +1,5 @@
+//! DPDK utils.
+
 use super::METADATA_SLOTS;
 use crate::config::{NetbricksConfiguration, DEFAULT_CACHE_SIZE, DEFAULT_POOL_SIZE};
 use crate::native::libnuma;
@@ -96,6 +98,7 @@ pub fn init_thread(tid: i32, core: i32) {
     };
 }
 
+/// Get NUMA domain.
 #[inline]
 pub fn get_domain() -> i32 {
     NUMA_DOMAIN.with(|f| f.get())

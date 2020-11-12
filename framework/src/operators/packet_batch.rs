@@ -10,6 +10,7 @@ use std::result;
 /// Base packet batch structure, this represents an array of mbufs and is the primary interface for sending and
 /// receiving packets from DPDK, allocations, etc. As a result many of the actions implemented in other types of batches
 /// ultimately call into this structure.
+#[derive(Debug)]
 pub struct PacketBatch {
     array: Vec<*mut MBuf>,
     scratch: Vec<*mut MBuf>,

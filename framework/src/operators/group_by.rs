@@ -21,6 +21,7 @@ pub type GroupFn<T, M> = Box<dyn FnMut(&Packet<T, M>) -> usize + Send>;
 /// groups into which packets are split and a packet-based UDF which given a packet returns the ID
 /// of the group to which it belongs. NetBricks also provides a set of predefined grouping
 /// functions that group traffic using commonly-used criterion (e.g., TCP flow).
+#[derive(Debug)]
 pub struct GroupBy<T, V>
 where
     T: EndOffset + 'static,

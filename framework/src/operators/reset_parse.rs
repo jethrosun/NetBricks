@@ -7,7 +7,7 @@ use crate::headers::NullHeader;
 use crate::interface::PacketTx;
 
 /// Reset parsing batch.
-// TODO:doc
+#[derive(Debug)]
 pub struct ResetParsingBatch<V>
 where
     V: Batch + BatchIterator + Act,

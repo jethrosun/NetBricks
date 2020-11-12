@@ -50,46 +50,55 @@ impl EndOffset for UdpHeader {
 }
 
 impl UdpHeader {
+    /// Initialize a default UDP header.
     #[inline]
     pub fn new() -> UdpHeader {
         Default::default()
     }
 
+    /// Initialize the src port.
     #[inline]
     pub fn src_port(&self) -> u16 {
         u16::from_be(self.src_port)
     }
 
+    /// Initialize the dst port.
     #[inline]
     pub fn dst_port(&self) -> u16 {
         u16::from_be(self.dst_port)
     }
 
+    /// Set the src port.
     #[inline]
     pub fn set_src_port(&mut self, port: u16) {
         self.src_port = u16::to_be(port);
     }
 
+    /// Set the dst port.
     #[inline]
     pub fn set_dst_port(&mut self, port: u16) {
         self.dst_port = u16::to_be(port);
     }
 
+    /// Length of the UDP header.
     #[inline]
     pub fn length(&self) -> u16 {
         u16::from_be(self.len)
     }
 
+    /// Set length of the UDP header.
     #[inline]
     pub fn set_length(&mut self, len: u16) {
         self.len = u16::to_be(len)
     }
 
+    /// Get the checksum of the UDP header.
     #[inline]
     pub fn checksum(&self) -> u16 {
         u16::from_be(self.csum)
     }
 
+    /// Set the checksum of the UDP header.
     #[inline]
     pub fn set_checksum(&mut self, csum: u16) {
         self.csum = u16::to_be(csum);

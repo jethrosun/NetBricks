@@ -10,7 +10,6 @@ use std::marker::PhantomData;
 pub type MetadataFn<T, M, M2> = Box<dyn FnMut(&Packet<T, M>) -> M2 + Send>;
 
 /// Add metadata Batch.
-// TODO:doc
 pub struct AddMetadataBatch<M, V>
 where
     M: Send + Sized,
