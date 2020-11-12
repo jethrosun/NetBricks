@@ -74,8 +74,9 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header(header_path.to_str().unwrap())
-        .rust_target(RustTarget::Nightly)
         .derive_debug(true)
+        .impl_debug(true)
+        .rust_target(RustTarget::Nightly)
         .clang_args(vec!["-I", dpdk_include_path.to_str().unwrap()].iter())
         .blacklist_type("max_align_t") // https://github.com/servo/rust-bindgen/issues/550
         .blacklist_function("strtold") // https://github.com/rust-lang/rust-bindgen/issues/1549
