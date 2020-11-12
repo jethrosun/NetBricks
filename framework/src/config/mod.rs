@@ -8,6 +8,7 @@ mod flag_reader;
 
 /// `NetBricks` control configuration. In theory all applications create one of these, either through the use of
 /// `read_configuration` or manually using args.
+#[derive(Debug)]
 pub struct NetbricksConfiguration {
     /// Name, this is passed on to DPDK. If you want to run multiple DPDK apps, this needs to be unique per application.
     pub name: String,
@@ -88,6 +89,7 @@ impl fmt::Display for NetbricksConfiguration {
 }
 
 /// Configuration for each port (network device) in `NetBricks`.
+#[derive(Debug)]
 pub struct PortConfiguration {
     /// Name. The exact semantics vary by backend. For DPDK, we allow things of the form:
     ///    <PCI ID> : Hardware device with PCI ID

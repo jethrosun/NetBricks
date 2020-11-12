@@ -24,6 +24,7 @@ pub trait TcpControlAgent {
 type FnvHash = BuildHasherDefault<FnvHasher>;
 
 /// TCP control server.
+#[derive(Debug)]
 pub struct TcpControlServer<T: TcpControlAgent> {
     listener: TcpListener,
     scheduler: PollScheduler,

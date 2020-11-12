@@ -24,6 +24,7 @@ pub const WRITE: u64 = 0x2;
 pub const HUP: u64 = 0x4;
 
 /// IO scheduler.
+#[derive(Debug)]
 pub struct IOScheduler {
     fd: RawFd,
     scheduler: PollHandle,

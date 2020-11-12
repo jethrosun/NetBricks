@@ -25,6 +25,7 @@ pub trait SctpControlAgent {
 type FnvHash = BuildHasherDefault<FnvHasher>;
 
 /// SCTP control server.
+#[derive(Debug)]
 pub struct SctpControlServer<T: SctpControlAgent> {
     listener: SctpListener,
     scheduler: PollScheduler,

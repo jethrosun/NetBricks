@@ -1,14 +1,14 @@
 use super::{Available, HUP, NONE, READ, WRITE};
 use nix::sys::epoll::*;
 use std::default::Default;
-use std::os::unix::io::AsRawFd;
-use std::os::unix::io::RawFd;
+use std::os::unix::io::{AsRawFd, RawFd};
 use std::slice;
 
 /// Token.
 pub type Token = u64;
 
 /// Epoll handle.
+#[derive(Debug)]
 pub struct PollHandle {
     epoll_fd: RawFd,
 }
@@ -56,6 +56,7 @@ impl PollHandle {
     }
 }
 /// Poll scheduler.
+#[derive(Debug)]
 pub struct PollScheduler {
     epoll_fd: RawFd,
     ready_tokens: Vec<EpollEvent>,
