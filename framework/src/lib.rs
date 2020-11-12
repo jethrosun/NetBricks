@@ -1,7 +1,6 @@
 //! A New NFV framework that tries to provide optimization to developers and isolation between NFs.
 #![deny(missing_docs)]
-#![warn(missing_debug_implementations)]
-#![warn(rust_2018_idioms, broken_intra_doc_links)]
+#![warn(missing_debug_implementations, rust_2018_idioms, broken_intra_doc_links)]
 #![recursion_limit = "1024"]
 #![feature(llvm_asm)]
 #![feature(log_syntax)]
@@ -54,11 +53,6 @@ pub mod config;
 pub mod control;
 pub mod headers;
 pub mod interface;
-
-#[allow(dead_code)]
-mod native;
-mod native_include;
-
 pub mod operators;
 pub mod pvn;
 pub mod queues;
@@ -66,3 +60,7 @@ pub mod scheduler;
 pub mod shared_state;
 pub mod state;
 pub mod utils;
+
+#[allow(dead_code)]
+mod native;
+mod native_include;

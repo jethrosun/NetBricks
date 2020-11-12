@@ -6,7 +6,7 @@ use std::hash::Hash;
 use std::hash::Hasher;
 
 /// MAC address.
-#[derive(Debug, Default)]
+#[derive(Default)]
 #[repr(C, packed)]
 pub struct MacAddress {
     /// Address.
