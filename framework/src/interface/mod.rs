@@ -1,5 +1,4 @@
 //! Interface utils.
-
 pub use self::packet::*;
 pub use self::port::*;
 pub mod dpdk;

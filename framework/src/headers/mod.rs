@@ -1,5 +1,4 @@
 //! Headers.
-#[allow(missing_debug_implementations)]
 pub use self::ip::*;
 pub use self::mac::*;
 pub use self::null_header::*;

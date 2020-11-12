@@ -1,6 +1,8 @@
 //! A New NFV framework that tries to provide optimization to developers and isolation between NFs.
 #![deny(missing_docs)]
-#![warn(missing_debug_implementations, rust_2018_idioms, broken_intra_doc_links)]
+// Consider disable missing debug because dpdk bindgen and several components in framework.
+// #![warn(missing_debug_implementations)]
+#![warn(rust_2018_idioms, broken_intra_doc_links)]
 #![recursion_limit = "1024"]
 #![feature(llvm_asm)]
 #![feature(log_syntax)]

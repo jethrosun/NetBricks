@@ -1,4 +1,3 @@
-#[allow(missing_debug_implementations)]
 extern crate bindgen;
 
 use bindgen::*;
@@ -74,8 +73,6 @@ fn main() {
 
     let bindings = bindgen::Builder::default()
         .header(header_path.to_str().unwrap())
-        .derive_debug(true)
-        .impl_debug(true)
         .rust_target(RustTarget::Nightly)
         .clang_args(vec!["-I", dpdk_include_path.to_str().unwrap()].iter())
         .blacklist_type("max_align_t") // https://github.com/servo/rust-bindgen/issues/550
