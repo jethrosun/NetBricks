@@ -27,7 +27,7 @@ use std::time::Instant;
 
 pub mod utils;
 
-const CONVERSION_FACTOR: f64 = 1_000_000_000.;
+// const CONVERSION_FACTOR: f64 = 1_000_000_000.;
 
 /// Test for the rdr proxy network function to schedule pipelines.
 pub fn rdr_proxy_test<S: Scheduler + Sized>(ports: Vec<CacheAligned<PortQueue>>, sched: &mut S) {
@@ -58,9 +58,9 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     parent: T,
     _sched: &mut S,
 ) -> CompositionBatch {
-    let (rdr_setup, rdr_iter, inst, measure_time) = read_setup_param("/home/jethros/setup".to_string()).unwrap();
-    let num_of_users = rdr_retrieve_users(rdr_setup).unwrap();
-    let rdr_users = rdr_read_rand_seed(num_of_users, rdr_iter).unwrap();
+    let param = read_setup_param("/home/jethros/setup".to_string()).unwrap();
+    let num_of_users = rdr_retrieve_users(param.setup).unwrap();
+    let rdr_users = rdr_read_rand_seed(num_of_users, param.iter).unwrap();
 
     // Measurement code
     //
@@ -103,7 +103,7 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     }
     println!("{} browsers are created ", num_of_users);
 
-    let _pivot = 1 as usize;
+    let _pivot = 1_usize;
 
     // Metrics for measurement
     let mut elapsed_time = Vec::new();
@@ -123,7 +123,7 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let start = Instant::now();
-                if inst {
+                if param.inst {
                     w.push(start);
                 }
             }
@@ -152,14 +152,11 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
             //  if *proto == 6 { if *src_ip == match_ip && dst_port == match_port { matched = true }
             //  else if *dst_ip == match_ip && src_port == match_port { matched = true } }
 
-            let match_ip = 180_907_852 as u32; // 10.200.111.76
+            let match_ip = 180_907_852_u32; // 10.200.111.76
 
-            if f.proto == 6 {
-                if f.src_ip == match_ip {
+            if f.proto == 6 && (
+                f.src_ip == match_ip || f.dst_ip == match_ip ){
                     matched = true
-                } else if f.dst_ip == match_ip {
-                    matched = true
-                }
             }
 
             // Scheduling browsing jobs.
@@ -171,25 +168,15 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                     // println!("pivot {:?}", cur_time);
                     let min = cur_time / 60;
                     let rest_sec = cur_time % 60;
-                    match rdr_workload.remove(&cur_time) {
-                        Some(wd) => {
-                            println!("{:?} min, {:?} second", min, rest_sec);
-                            match rdr_scheduler_ng(&cur_time, &rdr_users, wd, &browser_list) {
-                                Some((oks, errs, timeouts, closeds, visits, elapsed)) => {
-                                    num_of_ok += oks;
-                                    num_of_err += errs;
-                                    num_of_timeout += timeouts;
-                                    num_of_closed += closeds;
-                                    num_of_visit += visits;
-                                    elapsed_time.push(elapsed);
-                                }
-                                None => {
-                                    // println!("No workload for second {:?}", cur_time)
-                                }
-                            }
-                        }
-                        None => {
-                            // println!("No workload for second {:?}", cur_time)
+                    if let Some(wd) =  rdr_workload.remove(&cur_time) {
+                        println!("{:?} min, {:?} second", min, rest_sec);
+                        if let Some((oks, errs, timeouts, closeds, visits, elapsed)) = rdr_scheduler_ng(&cur_time, &rdr_users, wd, &browser_list) {
+                            num_of_ok += oks;
+                            num_of_err += errs;
+                            num_of_timeout += timeouts;
+                            num_of_closed += closeds;
+                            num_of_visit += visits;
+                            elapsed_time.push(elapsed);
                         }
                     }
                 }
@@ -198,23 +185,21 @@ pub fn rdr<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                 if pkt_count > NUM_TO_IGNORE {
                     let mut w = t2_1.lock().unwrap();
                     let end = Instant::now();
-                    if inst {
+                    if param.inst {
                         w.push(end);
                     }
                 }
-            } else {
-                if pkt_count > NUM_TO_IGNORE {
-                    // Insert the timestamp as
-                    let end = Instant::now();
-                    if inst {
-                        stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
-                    }
+            } else if pkt_count > NUM_TO_IGNORE {
+                // Insert the timestamp as
+                let end = Instant::now();
+                if param.inst {
+                    stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
                 }
             }
 
             pkt_count += 1;
 
-            if now.elapsed().as_secs() >= measure_time && inst && metric_exec == true {
+            if now.elapsed().as_secs() >= param.expr_time && param.inst && metric_exec {
                 // Measurement: metric for the performance of the RDR proxy
                 println!(
                     "Metric: num_of_oks: {:?}, num_of_errs: {:?}, num_of_timeout: {:?}, num_of_closed: {:?}, num_of_visit: {:?}",

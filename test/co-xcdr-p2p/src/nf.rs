@@ -16,15 +16,15 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
     parent: T,
     sched: &mut S,
 ) -> CompositionBatch {
-    // FIXME: read inst mode
-    let inst = false;
-
     // XCDR setup
-    let (setup_val, port, expr_num, inst, measure_time) = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
-    let time_span = xcdr_retrieve_param(setup_val).unwrap();
-    println!("Setup: {:?} port: {:?},  expr_num: {:?}", setup_val, port, expr_num);
+    let xcdr_param = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
+    let time_span = xcdr_retrieve_param(xcdr_param.setup).unwrap();
+    println!(
+        "Setup: {:?} port: {:?},  expr_num: {:?}",
+        xcdr_param.setup, xcdr_param.port, xcdr_param.expr_num
+    );
 
-    let latencyv = Arc::new(Mutex::new((Vec::<u128>::new())));
+    let latencyv = Arc::new(Mutex::new(Vec::<u128>::new()));
     let latv_1 = Arc::clone(&latencyv);
     let latv_2 = Arc::clone(&latencyv);
     println!("Latency vec uses millisecond");
@@ -34,14 +34,14 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
     // job id
     let mut job_id = 0;
 
-    let mut pivot = 1 as u128 + time_span;
+    let mut pivot = 1_u128 + time_span;
 
     let now = Instant::now();
     let mut cur = Instant::now();
     let mut time_diff = Duration::new(0, 0);
 
     // P2P setup
-    let (p2p_setup, p2p_iter, _, _) = read_setup_param("/home/jethros/setup".to_string()).unwrap();
+    let p2p_param = read_setup_param("/home/jethros/setup".to_string()).unwrap();
     let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string()).unwrap();
     let p2p_type = p2p_read_type("/home/jethros/setup".to_string()).unwrap();
     let torrents_dir = "/home/jethros/dev/pvn/utils/workloads/torrent_files/";
@@ -80,7 +80,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if xcdr_param.inst {
                     w.push(end);
                 }
             }
@@ -101,7 +101,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 let mut matched = 0;
                 // NOTE: the following ip addr and port are hardcode based on the trace we are
                 // replaying
-                let match_ip = 180_907_852 as u32; // 10.200.111.76
+                let match_ip = 180_907_852_u32; // 10.200.111.76
 
                 // https://wiki.wireshark.org/BitTorrent
                 let p2p_match_port = vec![6346, 6882, 6881, 6883, 6884, 6885, 6886, 6887, 6888, 6889, 6969];
@@ -109,15 +109,14 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 // Match RDR packets to group 1 and P2P packets to group 2, the rest to group 0
                 if f.proto == 17 {
                     matched = 1
-                } else if f.proto == 6 {
-                    if f.src_ip == match_ip || f.dst_ip == match_ip {
-                        if p2p_match_port.contains(&f.src_port) || p2p_match_port.contains(&f.dst_port) {
-                            matched = 2
-                        }
-                    }
+                } else if (f.proto == 6)
+                    && (f.src_ip == match_ip || f.dst_ip == match_ip)
+                    && (p2p_match_port.contains(&f.src_port) || p2p_match_port.contains(&f.dst_port))
+                {
+                    matched = 2
                 }
 
-                if now.elapsed().as_secs() >= measure_time && latency_exec == true {
+                if now.elapsed().as_secs() >= xcdr_param.expr_time && latency_exec {
                     println!("pkt count {:?}", pkt_count);
                     let w1 = t1_2.lock().unwrap();
                     let w2 = t2_2.lock().unwrap();
@@ -148,7 +147,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
 
                 if pkt_count > NUM_TO_IGNORE && matched == 0 {
                     let end = Instant::now();
-                    if inst {
+                    if xcdr_param.inst {
                         stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
                     }
                 }
@@ -166,7 +165,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if time_diff == Duration::new(0, 0) {
                 time_diff = now.elapsed();
                 println!("update time diff before crash: {:?}", time_diff);
-                pivot = pivot + time_diff.as_millis();
+                pivot += time_diff.as_millis();
                 println!("update pivot: {}", pivot);
             }
             let time_elapsed = now.elapsed().as_millis();
@@ -177,10 +176,10 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 let mut w = latv_2.lock().unwrap();
                 w.push(t);
 
-                let core_id = job_id % setup_val;
+                let core_id = job_id % xcdr_param.setup;
                 // we append a job to the job queue every *time_span*
                 let c = Arc::clone(&fak_conn);
-                append_job_faktory(pivot, c, core_id, &expr_num);
+                append_job_faktory(pivot, c, core_id, xcdr_param.expr_num);
                 // println!("job: {}, core id: {}", job_id, core_id);
 
                 cur = Instant::now();
@@ -193,7 +192,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if xcdr_param.inst {
                     w.push(end);
                 }
             }
@@ -217,7 +216,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                         println!("match p2p controlled before btrun");
 
                         // let _ = bt_run_torrents(fp_workload, num_of_torrents);
-                        let _ = bt_run_torrents(fp_workload, p2p_setup.clone());
+                        let _ = bt_run_torrents(fp_workload, p2p_param.setup);
 
                         println!("bt run is not blocking");
                         workload_exec = false;
@@ -225,15 +224,11 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                     // use the transmission rpc for general and ext workload
                     "app_p2p" | "app_p2p-ext" => {
                         println!("match p2p general or ext ");
-                        let p2p_torrents = p2p_read_rand_seed(num_of_torrents, p2p_iter.to_string()).unwrap();
+                        let p2p_torrents = p2p_read_rand_seed(num_of_torrents, p2p_param.iter.to_string()).unwrap();
                         let workload = p2p_load_json(fp_workload.to_string(), p2p_torrents);
 
                         let mut rt = Runtime::new().unwrap();
-                        match rt.block_on(add_all_torrents(
-                            num_of_torrents,
-                            workload.clone(),
-                            torrents_dir.to_string(),
-                        )) {
+                        match rt.block_on(add_all_torrents(num_of_torrents, workload, torrents_dir.to_string())) {
                             Ok(_) => println!("Add torrents success"),
                             Err(e) => println!("Add torrents failed with {:?}", e),
                         }
@@ -248,7 +243,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 workload_exec = false;
             }
 
-            if start.elapsed().as_secs() >= 1 as u64 {
+            if start.elapsed().as_secs() >= 1_u64 {
                 start = Instant::now();
             }
 
@@ -258,7 +253,7 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_3.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if xcdr_param.inst {
                     w.push(end);
                 }
             }

@@ -411,10 +411,7 @@ impl ReorderedBuffer {
     /// ReorderedBuffer is established and not closed.
     #[inline]
     pub fn is_established(&self) -> bool {
-        match self.state {
-            State::Closed => false,
-            _ => true,
-        }
+        !matches!(self.state, State::Closed)
     }
 
     /// Fast path to insert into the ReorderedBuffer.

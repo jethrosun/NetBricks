@@ -16,10 +16,10 @@ use std::io::Result;
 pub fn p2p_retrieve_param(fp_setup: String) -> Option<usize> {
     println!("fetch param");
     let p2p_type = p2p_read_type(fp_setup.clone()).unwrap();
-    let (p2p_setup, iter, _, _) = read_setup_param(fp_setup).unwrap();
+    let param = read_setup_param(fp_setup).unwrap();
     let mut map = HashMap::new();
 
-    println!("type: {}, setup: {}, iter: {}", p2p_type, p2p_setup, iter);
+    println!("type: {}, setup: {}, iter: {}", p2p_type, param.setup, param.iter);
     match &*p2p_type {
         // FIXME: nothing get matched???
         "app_p2p-controlled" => {
@@ -65,7 +65,7 @@ pub fn p2p_retrieve_param(fp_setup: String) -> Option<usize> {
             // map.insert("6", 10);
         }
     }
-    map.remove(&*p2p_setup)
+    map.remove(&*p2p_type)
 }
 
 /// Retrieve the p2p type param in the pvn setup config file.
@@ -194,7 +194,7 @@ pub fn p2p_read_rand_seed(num_of_torrents: usize, iter: String) -> Result<Vec<i6
 
     match json_data.get("p2p") {
         Some(p2p_data) => match p2p_data.get(&num_of_torrents.clone().to_string()) {
-            Some(setup_data) => match setup_data.get(iter.clone().to_string()) {
+            Some(setup_data) => match setup_data.get(iter.clone()) {
                 Some(data) => {
                     for x in data.as_array().unwrap() {
                         rand_vec.push(x.as_i64().unwrap());

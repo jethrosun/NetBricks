@@ -130,7 +130,7 @@ impl StandaloneScheduler {
         }
         println!(
             "Scheduler exiting {}",
-            thread::current().name().unwrap_or_else(|| "unknown-name")
+            thread::current().name().unwrap_or("unknown-name")
         );
     }
 

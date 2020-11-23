@@ -16,22 +16,22 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
     parent: T,
     sched: &mut S,
 ) -> CompositionBatch {
-    // FIXME: read inst mode
-    let inst = false;
-
     // RDR setup
-    let (rdr_setup, rdr_iter, inst, measure_time) = read_setup_param("/home/jethros/setup".to_string()).unwrap();
-    let num_of_users = rdr_retrieve_users(rdr_setup).unwrap();
-    let rdr_users = rdr_read_rand_seed(num_of_users, rdr_iter).unwrap();
+    let rdr_param = read_setup_param("/home/jethros/setup".to_string()).unwrap();
+    let num_of_users = rdr_retrieve_users(rdr_param.setup).unwrap();
+    let rdr_users = rdr_read_rand_seed(num_of_users, rdr_param.iter).unwrap();
 
     // XCDR setup
-    let latencyv = Arc::new(Mutex::new((Vec::<u128>::new())));
+    let latencyv = Arc::new(Mutex::new(Vec::<u128>::new()));
     let latv_1 = Arc::clone(&latencyv);
     let latv_2 = Arc::clone(&latencyv);
     println!("Latency vec uses millisecond");
-    let (setup_val, port, expr_num, _, _) = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
-    let time_span = xcdr_retrieve_param(setup_val).unwrap();
-    println!("Setup: {:?} port: {:?},  expr_num: {:?}", setup_val, port, expr_num);
+    let xcdr_param = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
+    let time_span = xcdr_retrieve_param(xcdr_param.setup).unwrap();
+    println!(
+        "Setup: {:?} port: {:?},  expr_num: {:?}",
+        rdr_param.setup, xcdr_param.port, xcdr_param.expr_num
+    );
 
     // faktory job queue
     let fak_conn = Arc::new(Mutex::new(Producer::connect(None).unwrap()));
@@ -102,7 +102,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if rdr_param.inst {
                     w.push(end);
                 }
             }
@@ -132,38 +132,34 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 let mut matched = 0;
                 // NOTE: the following ip addr and port are hardcode based on the trace we are
                 // replaying
-                let match_ip = 180_907_852 as u32; // 10.200.111.76
-                let rdr_match_port = 443 as u16;
+                let match_ip = 180_907_852_u32; // 10.200.111.76
+                let rdr_match_port = 443_u16;
 
-                let xcdr_match_src_ip = 3_232_235_524 as u32;
+                let xcdr_match_src_ip = 3_232_235_524_u32;
                 let xcdr_match_src_port = 58_111;
-                let xcdr_match_dst_ip = 2_457_012_302 as u32;
+                let xcdr_match_dst_ip = 2_457_012_302_u32;
                 let xcdr_match_dst_port = 443;
 
                 // Match RDR packets to group 1 and P2P packets to group 2, the rest to group 0
-                if *proto == 6 {
-                    if *src_ip == match_ip || *dst_ip == match_ip {
-                        if src_port == rdr_match_port || dst_port == rdr_match_port {
-                            matched = 1
-                        }
-                    }
-                } else if *proto == 17 {
-                    if *src_ip == xcdr_match_src_ip
+                if *proto == 6
+                    && (*src_ip == match_ip || *dst_ip == match_ip)
+                    && (src_port == rdr_match_port || dst_port == rdr_match_port)
+                {
+                    matched = 1
+                } else if *proto == 17
+                    && ((*src_ip == xcdr_match_src_ip
                         && src_port == xcdr_match_src_port
                         && *dst_ip == xcdr_match_dst_ip
-                        && dst_port == xcdr_match_dst_port
-                    {
-                        matched = 2
-                    } else if *src_ip == xcdr_match_dst_ip
-                        && src_port == xcdr_match_dst_port
-                        && *dst_ip == xcdr_match_src_ip
-                        && dst_port == xcdr_match_src_port
-                    {
-                        matched = 2
-                    }
+                        && dst_port == xcdr_match_dst_port)
+                        || (*src_ip == xcdr_match_dst_ip
+                            && src_port == xcdr_match_dst_port
+                            && *dst_ip == xcdr_match_src_ip
+                            && dst_port == xcdr_match_src_port))
+                {
+                    matched = 2
                 }
 
-                if now.elapsed().as_secs() >= measure_time && latency_exec == true {
+                if now.elapsed().as_secs() >= rdr_param.expr_time && latency_exec {
                     println!("pkt count {:?}", pkt_count);
                     let w1 = t1_2.lock().unwrap();
                     let w2 = t2_2.lock().unwrap();
@@ -194,7 +190,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
 
                 if pkt_count > NUM_TO_IGNORE && matched == 0 {
                     let end = Instant::now();
-                    if inst {
+                    if rdr_param.inst {
                         stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
                     }
                 }
@@ -215,11 +211,9 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 // println!("pivot {:?}", cur_time);
                 let min = cur_time / 60;
                 let rest_sec = cur_time % 60;
-                match rdr_workload.remove(&cur_time) {
-                    Some(wd) => {
+                if let  Some(wd) = rdr_workload.remove(&cur_time) {
                         println!("{:?} min, {:?} second", min, rest_sec);
-                        match rdr_scheduler_ng(&cur_time, &rdr_users, wd, &browser_list) {
-                            Some((oks, errs, timeouts, closeds, visits, elapsed)) => {
+                        if let Some((oks, errs, timeouts, closeds, visits, elapsed)) =  rdr_scheduler_ng(&cur_time, &rdr_users, wd, &browser_list) {
                                 num_of_ok += oks;
                                 num_of_err += errs;
                                 num_of_timeout += timeouts;
@@ -227,20 +221,12 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                                 num_of_visit += visits;
                                 elapsed_time.push(elapsed);
                             }
-                            None => {
-                                // println!("No workload for second {:?}", cur_time),
-                            }
                         }
-                    },
-                    None => {
-                        // println!("No workload for second {:?}", cur_time),
                     }
-                }
-            }
 
             pkt_count += 1;
 
-            if now.elapsed().as_secs() >= measure_time && metric_exec == true {
+            if now.elapsed().as_secs() >= rdr_param.expr_time && metric_exec {
                 // Measurement: metric for the performance of the RDR proxy
                 println!(
                     "Metric: num_of_oks: {:?}, num_of_errs: {:?}, num_of_timeout: {:?}, num_of_closed: {:?}, num_of_visit: {:?}",
@@ -254,7 +240,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_3.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if rdr_param.inst {
                     w.push(end);
                 }
             }
@@ -270,7 +256,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if time_diff == Duration::new(0, 0) {
                 time_diff = now.elapsed();
                 println!("update time diff before crash: {:?}", time_diff);
-                pivot = pivot + time_diff.as_millis();
+                pivot += time_diff.as_millis();
                 println!("update pivot: {}", pivot);
             }
             let time_elapsed = now.elapsed().as_millis();
@@ -281,10 +267,10 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 let mut w = latv_2.lock().unwrap();
                 w.push(t);
 
-                let core_id = job_id % setup_val;
+                let core_id = job_id % xcdr_param.setup;
                 // we append a job to the job queue every *time_span*
                 let c = Arc::clone(&fak_conn);
-                append_job_faktory(pivot, c, core_id, &expr_num);
+                append_job_faktory(pivot, c, core_id, xcdr_param.expr_num);
                 // println!("job: {}, core id: {}", job_id, core_id);
 
                 cur = Instant::now();
@@ -297,7 +283,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if rdr_param.inst {
                     w.push(end);
                 }
             }

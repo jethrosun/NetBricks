@@ -27,12 +27,25 @@ pub const APP_MEASURE_TIME: u64 = 610;
 /// Fake flow when retrieving flow failed.
 pub fn fake_flow() -> Flow {
     Flow {
-        src_ip: 0 as u32,
-        dst_ip: 0 as u32,
-        src_port: 0 as u16,
-        dst_port: 0 as u16,
-        proto: 0 as u8,
+        src_ip: 0_u32,
+        dst_ip: 0_u32,
+        src_port: 0_u16,
+        dst_port: 0_u16,
+        proto: 0_u8,
     }
+}
+
+/// experiment parameters.
+#[derive(Debug, Clone, Copy)]
+pub struct ExprParam {
+    /// setup (workload level)
+    pub setup: usize,
+    /// iteration of this run
+    pub iter: usize,
+    /// whether we have turned on latency instrumentation
+    pub inst: bool,
+    /// running experiment time
+    pub expr_time: u64,
 }
 
 /// Read various params from setup.
@@ -40,7 +53,7 @@ pub fn fake_flow() -> Flow {
 /// Currently returns: *setup* (which setup it is), *iter* (which iteration it
 /// is), *inst* (instrumentation for retrieving latencies for every packet),
 /// and *expr running time* (how long the NF will run).
-pub fn read_setup_param(file_path: String) -> Option<(String, String, bool, u64)> {
+pub fn read_setup_param(file_path: String) -> Option<ExprParam> {
     let file = File::open(file_path.clone()).expect("file should open read only");
     let read_json = file_path + "should be proper JSON";
     let json: Value = from_reader(file).expect(&read_json);
@@ -53,6 +66,7 @@ pub fn read_setup_param(file_path: String) -> Option<(String, String, bool, u64)
             None
         }
     };
+    let setup = setup.unwrap().parse::<usize>();
 
     let iter: Option<String> = match serde_json::from_value(json.get("iter").expect("file should have setup").clone()) {
         Ok(val) => Some(val),
@@ -61,6 +75,7 @@ pub fn read_setup_param(file_path: String) -> Option<(String, String, bool, u64)
             None
         }
     };
+    let iter = iter.unwrap().parse::<usize>();
 
     let inst: Option<String> = match serde_json::from_value(json.get("inst").expect("file should have setup").clone()) {
         Ok(val) => Some(val),
@@ -88,12 +103,13 @@ pub fn read_setup_param(file_path: String) -> Option<(String, String, bool, u64)
         _ => None,
     };
 
-    if setup.is_some() && iter.is_some() && inst_val.is_some() && expr_time.is_some() {
-        println!(
-            "Setup: {:?}, Iter: {:?}, Inst mode: {:?}, Expr mode: {:?}",
-            setup, iter, inst_val, expr_time
-        );
-        Some((setup.unwrap(), iter.unwrap(), inst_val.unwrap(), expr_time.unwrap()))
+    if let (Ok(setup), Ok(iter), Some(inst), Some(expr_time)) = (setup, iter, inst_val, expr_time) {
+        Some(ExprParam {
+            setup,
+            iter,
+            inst,
+            expr_time,
+        })
     } else {
         None
     }
@@ -135,32 +151,29 @@ pub fn merge_ts(
 
 /// Compute statistics for the latency results collected.
 pub fn compute_stat(mut tmp_results: Vec<u128>) {
-    tmp_results.sort();
+    tmp_results.sort_unstable();
     let mut results: Vec<f64> = tmp_results.into_iter().map(|item| item as f64).collect();
     let bar = results.percentile(99);
     let (rest, mut results): (_, Vec<_>) = results.into_iter().partition(|x| x >= &bar);
     println!("sorting and then type casting done",);
 
     println!("Details of the results in rest",);
-    let mut count1 = 0;
     let chunk_size1 = rest.len() / 100 + 1;
     //generate 100 groups
-    for chunk in rest.chunks(chunk_size1) {
+    for (count, chunk) in results.chunks(chunk_size1).enumerate() {
         println!(
             "Rest_group {:?}, median: {:02?}, mean: {:02?}, std dev: {:02?}",
-            count1,
+            count,
             chunk.median(),
             chunk.mean(),
             chunk.std_dev()
         );
-        count1 += 1;
     }
 
     println!("Details of the results in main",);
-    let mut count = 0;
     let chunk_size = results.len() / 100 + 1;
     //generate 100 groups
-    for chunk in results.chunks(chunk_size) {
+    for (count, chunk) in results.chunks(chunk_size).enumerate() {
         println!(
             "Group {:?}, median: {:02?}, mean: {:02?}, std dev: {:02?}",
             count,
@@ -168,7 +181,6 @@ pub fn compute_stat(mut tmp_results: Vec<u128>) {
             chunk.mean(),
             chunk.std_dev()
         );
-        count += 1;
     }
 
     let min = results.min();

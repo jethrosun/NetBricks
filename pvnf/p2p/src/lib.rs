@@ -34,14 +34,14 @@ use tokio::runtime::Runtime;
 
 pub mod utils;
 
-const CONVERSION_FACTOR: f64 = 1_000_000_000.;
+// const CONVERSION_FACTOR: f64 = 1_000_000_000.;
 
 pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     parent: T,
     sched: &mut S,
 ) -> CompositionBatch {
     // setup for this run
-    let (p2p_setup, p2p_iter, inst, measure_time) = read_setup_param("/home/jethros/setup".to_string()).unwrap();
+    let param = read_setup_param("/home/jethros/setup".to_string()).unwrap();
     let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string()).unwrap();
     let p2p_type = p2p_read_type("/home/jethros/setup".to_string()).unwrap();
 
@@ -85,7 +85,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let start = Instant::now();
-                if inst {
+                if param.inst {
                     w.push(start);
                 }
             }
@@ -113,15 +113,13 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                 // https://wiki.wireshark.org/BitTorrent
                 let match_port = vec![6882, 6883, 6884, 6885, 6886, 6887, 6888, 6889, 6969];
 
-                if f.proto == 6 {
-                    if f.src_ip == match_ip && match_port.contains(&f.dst_port) {
-                        matched = true
-                    } else if f.dst_ip == match_ip && match_port.contains(&f.src_port) {
-                        matched = true
-                    }
+                if f.proto == 6 && (f.src_ip == match_ip && match_port.contains(&f.dst_port))
+                    || (f.dst_ip == match_ip && match_port.contains(&f.src_port))
+                {
+                    matched = true
                 }
 
-                if now.elapsed().as_secs() >= measure_time && inst && metric_exec == true {
+                if now.elapsed().as_secs() >= param.expr_time && param.inst && metric_exec {
                     println!("pkt count {:?}", pkt_count);
                     let w1 = t1_2.lock().unwrap();
                     let w2 = t2_2.lock().unwrap();
@@ -154,7 +152,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
 
                 if pkt_count > NUM_TO_IGNORE && !matched {
                     let stop = Instant::now();
-                    if inst {
+                    if param.inst {
                         stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, stop);
                     }
                 }
@@ -185,23 +183,19 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                         println!("match p2p controlled before btrun");
 
                         // let _ = bt_run_torrents(fp_workload, num_of_torrents);
-                        let _ = bt_run_torrents(fp_workload, p2p_setup.clone());
+                        let _ = bt_run_torrents(fp_workload, param.setup);
 
                         println!("bt run is not blocking");
-                        workload_exec = false;
+                        // workload_exec = false;
                     }
                     // use the transmission rpc for general and ext workload
                     "app_p2p" | "app_p2p-ext" => {
                         println!("match p2p general or ext ");
-                        let p2p_torrents = p2p_read_rand_seed(num_of_torrents, p2p_iter.to_string()).unwrap();
+                        let p2p_torrents = p2p_read_rand_seed(num_of_torrents, param.iter.to_string()).unwrap();
                         let workload = p2p_load_json(fp_workload.to_string(), p2p_torrents);
 
                         let mut rt = Runtime::new().unwrap();
-                        match rt.block_on(add_all_torrents(
-                            num_of_torrents,
-                            workload.clone(),
-                            torrents_dir.to_string(),
-                        )) {
+                        match rt.block_on(add_all_torrents(num_of_torrents, workload, torrents_dir.to_string())) {
                             Ok(_) => println!("Add torrents success"),
                             Err(e) => println!("Add torrents failed with {:?}", e),
                         }
@@ -226,7 +220,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if param.inst {
                     w.push(end);
                 }
             }

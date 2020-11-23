@@ -11,10 +11,27 @@ pub const SHORT_MEASURE_TIME: u64 = 61;
 /// Time for the application experiment.
 pub const APP_MEASURE_TIME: u64 = 610;
 
+/// experiment parameters.
+#[derive(Debug, Clone, Copy)]
+pub struct XcdrExprParam {
+    /// setup (workload level)
+    pub setup: usize,
+    /// iteration of this run
+    pub iter: usize,
+    /// whether we have turned on latency instrumentation
+    pub inst: bool,
+    /// faktory port that we use to submit job to the queue
+    pub port: usize,
+    /// running experiment time
+    pub expr_time: u64,
+    /// running experiment number
+    pub expr_num: usize,
+}
+
 /// Read setup for transcoder NF. This function returns <setup, port, expr number, inst, measure time>.
 ///
 /// We need to get the port number for faktory queue besides the setup value.
-pub fn xcdr_read_setup(file_path: String) -> Option<(usize, String, String, bool, u64)> {
+pub fn xcdr_read_setup(file_path: String) -> Option<XcdrExprParam> {
     let file = File::open(file_path).expect("file should open read only");
     let json: Value = from_reader(file).expect("file should be proper JSON");
 
@@ -26,23 +43,16 @@ pub fn xcdr_read_setup(file_path: String) -> Option<(usize, String, String, bool
             None
         }
     };
+    let setup = setup.unwrap().parse::<usize>();
 
-    let port: Option<String> = match serde_json::from_value(json.get("port").expect("file should have port").clone()) {
+    let iter: Option<String> = match serde_json::from_value(json.get("iter").expect("file should have setup").clone()) {
         Ok(val) => Some(val),
         Err(e) => {
             println!("Malformed JSON response: {}", e);
             None
         }
     };
-
-    let expr_num: Option<String> =
-        match serde_json::from_value(json.get("expr_num").expect("file should have expr_num").clone()) {
-            Ok(val) => Some(val),
-            Err(e) => {
-                println!("Malformed JSON response: {}", e);
-                None
-            }
-        };
+    let iter = iter.unwrap().parse::<usize>();
 
     let inst: Option<String> = match serde_json::from_value(json.get("inst").expect("file should have setup").clone()) {
         Ok(val) => Some(val),
@@ -57,6 +67,25 @@ pub fn xcdr_read_setup(file_path: String) -> Option<(usize, String, String, bool
         _ => None,
     };
 
+    let port: Option<String> = match serde_json::from_value(json.get("port").expect("file should have port").clone()) {
+        Ok(val) => Some(val),
+        Err(e) => {
+            println!("Malformed JSON response: {}", e);
+            None
+        }
+    };
+    let port = port.unwrap().parse::<usize>();
+
+    let expr_num: Option<String> =
+        match serde_json::from_value(json.get("expr_num").expect("file should have expr_num").clone()) {
+            Ok(val) => Some(val),
+            Err(e) => {
+                println!("Malformed JSON response: {}", e);
+                None
+            }
+        };
+    let expr_num = expr_num.unwrap().parse::<usize>();
+
     let mode: Option<String> = match serde_json::from_value(json.get("mode").expect("file should have setup").clone()) {
         Ok(val) => Some(val),
         Err(e) => {
@@ -70,17 +99,19 @@ pub fn xcdr_read_setup(file_path: String) -> Option<(usize, String, String, bool
         _ => None,
     };
 
-    if port.is_some() && setup.is_some() && expr_num.is_some() && inst_val.is_some() && expr_time.is_some() {
-        return Some((
-            setup.unwrap().parse::<usize>().unwrap(),
-            port.unwrap().to_string(),
-            expr_num.unwrap().to_string(),
-            inst_val.unwrap(),
-            expr_time.unwrap(),
-        ));
+    if let (Ok(setup), Ok(iter), Some(inst), Ok(port), Some(expr_time), Ok(expr_num)) =
+        (setup, iter, inst_val, port, expr_time, expr_num)
+    {
+        Some(XcdrExprParam {
+            setup,
+            iter,
+            inst,
+            port,
+            expr_time,
+            expr_num,
+        })
     } else {
-        println!("Setup: {:?} and Port: {:?} have None values", setup, port);
-        return None;
+        None
     }
 }
 

@@ -6,6 +6,7 @@ use e2d2::scheduler::Scheduler;
 use e2d2::utils::Flow;
 use faktory::{Job, Producer};
 use rustls::internal::msgs::handshake::HandshakePayload::{ClientHello, ClientKeyExchange, ServerHello};
+use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
@@ -16,9 +17,6 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
     parent: T,
     sched: &mut S,
 ) -> CompositionBatch {
-    // FIXME: read inst mode
-    let inst = false;
-
     // TLSV setup
     //
     let mut payload_cache = HashMap::<Flow, Vec<u8>>::with_hasher(Default::default());
@@ -36,13 +34,16 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
     let mut cert_count = 0;
 
     // XCDR setup
-    let latencyv = Arc::new(Mutex::new((Vec::<u128>::new())));
+    let latencyv = Arc::new(Mutex::new(Vec::<u128>::new()));
     let latv_1 = Arc::clone(&latencyv);
     let latv_2 = Arc::clone(&latencyv);
     println!("Latency vec uses millisecond");
-    let (setup_val, port, expr_num, inst, measure_time) = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
-    let time_span = xcdr_retrieve_param(setup_val).unwrap();
-    println!("Setup: {:?} port: {:?},  expr_num: {:?}", setup_val, port, expr_num);
+    let xcdr_param = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
+    let time_span = xcdr_retrieve_param(xcdr_param.setup).unwrap();
+    println!(
+        "Setup: {:?} port: {:?}, expr_num: {:?}",
+        xcdr_param.setup, xcdr_param.port, xcdr_param.expr_num
+    );
     // faktory job queue
     let fak_conn = Arc::new(Mutex::new(Producer::connect(None).unwrap()));
     // job id
@@ -88,7 +89,7 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if xcdr_param.inst {
                     w.push(end);
                 }
             }
@@ -119,23 +120,20 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
                 // Match RDR packets to group 1 and P2P packets to group 2, the rest to group 0
                 if f.proto == 6 {
                     matched = 1
-                } else if f.proto == 17 {
-                    if f.src_ip == xcdr_match_src_ip
+                } else if f.proto == 17
+                    && ((f.src_ip == xcdr_match_src_ip
                         && f.src_port == xcdr_match_src_port
                         && f.dst_ip == xcdr_match_dst_ip
-                        && f.dst_port == xcdr_match_dst_port
-                    {
-                        matched = 2
-                    } else if f.src_ip == xcdr_match_dst_ip
-                        && f.src_port == xcdr_match_dst_port
-                        && f.dst_ip == xcdr_match_src_ip
-                        && f.dst_port == xcdr_match_src_port
-                    {
-                        matched = 2
-                    }
+                        && f.dst_port == xcdr_match_dst_port)
+                        || (f.src_ip == xcdr_match_dst_ip
+                            && f.src_port == xcdr_match_dst_port
+                            && f.dst_ip == xcdr_match_src_ip
+                            && f.dst_port == xcdr_match_src_port))
+                {
+                    matched = 2
                 }
 
-                if now.elapsed().as_secs() >= measure_time && latency_exec == true {
+                if now.elapsed().as_secs() >= xcdr_param.expr_time && latency_exec {
                     println!("pkt count {:?}", pkt_count);
                     let w1 = t1_2.lock().unwrap();
                     let w2 = t2_2.lock().unwrap();
@@ -166,7 +164,7 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
 
                 if pkt_count > NUM_TO_IGNORE && matched == 0 {
                     let end = Instant::now();
-                    if inst {
+                    if xcdr_param.inst {
                         stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
                     }
                 }
@@ -197,32 +195,34 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
                 if payload_cache.contains_key(flow) {
                     // The rest of the TLS server hello handshake should be captured here.
                     // Check if this packet is not expected, ie, is a out of order segment.
-                    if _seq == *seqnum_map.get(flow).unwrap() {
-                        // We received an expected packet
-                        //debug!("{:?}", p.get_payload());
-                        tlsf_update(*flow, payload_cache.entry(*flow), &p.get_payload());
-                        seqnum_map.entry(*flow).and_modify(|e| {
-                            *e = *e + _payload_size as u32;
-                            ()
-                        });
-                    } else if _seq > *seqnum_map.get(flow).unwrap() {
-                        // We received a out-of-order TLS segment
-                        // We need to check if we should update the entry in the tmp payload cache
-                        if tmp_payload_cache.contains_key(flow) {
-                            // Check if we should update the entry in the tmp payload cache
-                            let (_, entry_expected_seqno) = *tmp_seqnum_map.get(flow).unwrap();
-                            if _seq == entry_expected_seqno {
-                                tlsf_update(*flow, tmp_payload_cache.entry(*flow), &p.get_payload());
-                                tmp_seqnum_map.entry(*flow).and_modify(|(_, entry_expected_seqno)| {
-                                    *entry_expected_seqno = *entry_expected_seqno + _payload_size as u32;
-                                });
-                            } else {
-                            }
-                        } else {
-                            tmp_seqnum_map.insert(*flow, (_seq, _seq + _payload_size as u32));
-                            tmp_payload_cache.insert(*flow, p.get_payload().to_vec());
+                    match _seq.cmp(seqnum_map.get(&flow).unwrap()) {
+                        Ordering::Equal => {
+                            // We received an expected packet
+                            //debug!("{:?}", p.get_payload());
+                            tlsf_update(payload_cache.entry(*flow), &p.get_payload());
+                            seqnum_map.entry(*flow).and_modify(|e| {
+                                *e += _payload_size as u32;
+                            });
                         }
-                    } else {
+                        Ordering::Greater => {
+                            // We received a out-of-order TLS segment
+                            // We need to check if we should update the entry in the tmp payload cache
+                            if tmp_payload_cache.contains_key(flow) {
+                                // Check if we should update the entry in the tmp payload cache
+                                let (_, entry_expected_seqno) = *tmp_seqnum_map.get(flow).unwrap();
+                                if _seq == entry_expected_seqno {
+                                    tlsf_update(tmp_payload_cache.entry(*flow), &p.get_payload());
+                                    tmp_seqnum_map.entry(*flow).and_modify(|(_, entry_expected_seqno)| {
+                                        *entry_expected_seqno += _payload_size as u32;
+                                    });
+                                } else {
+                                }
+                            } else {
+                                tmp_seqnum_map.insert(*flow, (_seq, _seq + _payload_size as u32));
+                                tmp_payload_cache.insert(*flow, p.get_payload().to_vec());
+                            }
+                        }
+                        Ordering::Less => {}
                     }
                 } else {
                     match on_frame(&p.get_payload()) {
@@ -251,17 +251,29 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
                                 ClientKeyExchange(_) => {
                                     let dns_name = name_cache.remove(&rev_flow);
                                     match dns_name {
-                                        Some(name) => do_client_key_exchange(
-                                            name,
-                                            flow,
-                                            &rev_flow,
-                                            &mut cert_count,
-                                            &mut unsafe_connection,
-                                            &mut tmp_payload_cache,
-                                            &mut tmp_seqnum_map,
-                                            &mut payload_cache,
-                                            &mut seqnum_map,
-                                        ),
+                                        Some(name) => {
+                                            if tmp_payload_cache.contains_key(&rev_flow) {
+                                                unordered_validate(
+                                                    name,
+                                                    &flow,
+                                                    &mut cert_count,
+                                                    &mut unsafe_connection,
+                                                    &mut tmp_payload_cache,
+                                                    &mut tmp_seqnum_map,
+                                                    &mut payload_cache,
+                                                    &mut seqnum_map,
+                                                )
+                                            } else {
+                                                ordered_validate(
+                                                    name,
+                                                    &flow,
+                                                    &mut cert_count,
+                                                    &mut unsafe_connection,
+                                                    &mut payload_cache,
+                                                    &mut seqnum_map,
+                                                )
+                                            }
+                                        }
                                         None => eprintln!("We are missing the dns name from the client hello",),
                                     }
                                 }
@@ -294,7 +306,7 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_3.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if xcdr_param.inst {
                     w.push(end);
                 }
             }
@@ -310,7 +322,7 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
             if time_diff == Duration::new(0, 0) {
                 time_diff = now.elapsed();
                 println!("update time diff before crash: {:?}", time_diff);
-                pivot = pivot + time_diff.as_millis();
+                pivot += time_diff.as_millis();
                 println!("update pivot: {}", pivot);
             }
             let time_elapsed = now.elapsed().as_millis();
@@ -321,10 +333,10 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
                 let mut w = latv_2.lock().unwrap();
                 w.push(t);
 
-                let core_id = job_id % setup_val;
+                let core_id = job_id % xcdr_param.setup;
                 // we append a job to the job queue every *time_span*
                 let c = Arc::clone(&fak_conn);
-                append_job_faktory(pivot, c, core_id, &expr_num);
+                append_job_faktory(pivot, c, core_id, xcdr_param.expr_num);
                 // println!("job: {}, core id: {}", job_id, core_id);
 
                 cur = Instant::now();
@@ -337,7 +349,7 @@ pub fn tlsv_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Si
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if xcdr_param.inst {
                     w.push(end);
                 }
             }

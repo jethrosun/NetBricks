@@ -53,7 +53,7 @@ pub fn rdr_load_workload(
 }
 
 /// Retrieve the number of users based on our setup configuration.
-pub fn rdr_retrieve_users(rdr_setup: String) -> Option<usize> {
+pub fn rdr_retrieve_users(rdr_setup: usize) -> Option<usize> {
     let mut map = HashMap::new();
     // map.insert(1, 2);
     // map.insert(2, 4);
@@ -69,18 +69,18 @@ pub fn rdr_retrieve_users(rdr_setup: String) -> Option<usize> {
     // map.insert(5, 8);
     // map.insert(6, 10);
 
-    map.insert("1", 5);
-    map.insert("2", 10);
-    map.insert("3", 20);
-    map.insert("4", 40);
-    map.insert("5", 80);
-    map.insert("6", 100);
+    map.insert(1, 5);
+    map.insert(2, 10);
+    map.insert(3, 20);
+    map.insert(4, 40);
+    map.insert(5, 80);
+    map.insert(6, 100);
 
-    map.remove(&*rdr_setup)
+    map.remove(&rdr_setup)
 }
 
 /// Read the pregenerated randomness seed from file.
-pub fn rdr_read_rand_seed(num_of_users: usize, iter: String) -> Result<Vec<i64>> {
+pub fn rdr_read_rand_seed(num_of_users: usize, iter: usize) -> Result<Vec<i64>> {
     let rand_seed_file = "/home/jethros/dev/pvn/utils/rand_number/rand.json";
     let mut rand_vec = Vec::new();
     let file = File::open(rand_seed_file).expect("rand seed file should open read only");
@@ -88,7 +88,7 @@ pub fn rdr_read_rand_seed(num_of_users: usize, iter: String) -> Result<Vec<i64>>
 
     match json_data.get("rdr") {
         Some(rdr_data) => match rdr_data.get(&num_of_users.clone().to_string()) {
-            Some(setup_data) => match setup_data.get(iter.clone().to_string()) {
+            Some(setup_data) => match setup_data.get(iter) {
                 Some(data) => {
                     for x in data.as_array().unwrap() {
                         rand_vec.push(x.as_i64().unwrap());

@@ -31,7 +31,7 @@ use std::time::{Duration, Instant};
 
 pub mod utils;
 
-const CONVERSION_FACTOR: f64 = 1_000_000_000.;
+// const CONVERSION_FACTOR: f64 = 1_000_000_000.;
 
 pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
     parent: T,
@@ -46,11 +46,14 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
     // Specific setup config for this run
 
     // setup for this run
-    let (setup_val, port, expr_num, inst, measure_time) = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
-    let time_span = xcdr_retrieve_param(setup_val).unwrap();
-    println!("Setup: {:?} port: {:?},  expr_num: {:?}", setup_val, port, expr_num);
+    let param = xcdr_read_setup("/home/jethros/setup".to_string()).unwrap();
+    let time_span = xcdr_retrieve_param(param.setup).unwrap();
+    println!(
+        "Setup: {:?} port: {:?},  expr_num: {:?}",
+        param.setup, param.port, param.expr_num
+    );
 
-    /// faktory job queue
+    // faktory job queue
     let fak_conn = Arc::new(Mutex::new(Producer::connect(None).unwrap()));
 
     // Measurement code
@@ -58,7 +61,7 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
     // NOTE: Store timestamps and calculate the delta to get the processing time for individual
     // packet is disabled here (TOTAL_MEASURED_PKT removed)
 
-    /// start timestamps will be a vec protected with arc and mutex.
+    // start timestamps will be a vec protected with arc and mutex.
     let start_ts = Arc::new(Mutex::new(Vec::<Instant>::with_capacity(EPSILON)));
     let mut stop_ts_not_matched: HashMap<usize, Instant> = HashMap::with_capacity(EPSILON);
     let stop_ts_matched = Arc::new(Mutex::new(Vec::<Instant>::with_capacity(EPSILON)));
@@ -68,9 +71,9 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
     let t2_1 = Arc::clone(&stop_ts_matched);
     let t2_2 = Arc::clone(&stop_ts_matched);
 
-    /// pkt count
+    // pkt count
     let mut pkt_count = 0;
-    /// job id
+    // job id
     let mut job_id = 0;
 
     let mut pivot = 1 + time_span;
@@ -92,7 +95,7 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let start = Instant::now();
-                if inst {
+                if param.inst {
                     w.push(start);
                 }
             }
@@ -116,28 +119,25 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
                 let mut matched = false;
                 // NOTE: the following ip addr and port are hardcode based on the trace we are
                 // replaying
-                let match_src_ip = 3_232_235_524 as u32;
+                let match_src_ip = 3_232_235_524_u32;
                 let match_src_port = 443;
-                let match_dst_ip = 2_457_012_302 as u32;
+                let match_dst_ip = 2_457_012_302_u32;
                 let match_dst_port = 58_111;
 
-                if f.proto == 17 {
-                    if f.src_ip == match_src_ip
+                if f.proto == 17
+                    && ((f.src_ip == match_src_ip
                         && f.src_port == match_src_port
                         && f.dst_ip == match_dst_ip
-                        && f.dst_port == match_dst_port
-                    {
-                        matched = true
-                    } else if f.src_ip == match_dst_ip
-                        && f.src_port == match_dst_port
-                        && f.dst_ip == match_src_ip
-                        && f.dst_port == match_src_port
-                    {
-                        matched = true
-                    }
+                        && f.dst_port == match_dst_port)
+                        || (f.src_ip == match_dst_ip
+                            && f.src_port == match_dst_port
+                            && f.dst_ip == match_src_ip
+                            && f.dst_port == match_src_port))
+                {
+                    matched = true
                 }
 
-                if now.elapsed().as_secs() >= measure_time && inst && metric_exec == true {
+                if now.elapsed().as_secs() >= param.expr_time && param.inst && metric_exec {
                     println!("Pivot/span: {:?}", pivot / time_span);
                     let w = latv_1.lock().unwrap();
                     println!("Metric: {:?}", w);
@@ -174,7 +174,7 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
 
                 if pkt_count > NUM_TO_IGNORE && !matched {
                     let end = Instant::now();
-                    if inst {
+                    if param.inst {
                         stop_ts_not_matched.insert(pkt_count - NUM_TO_IGNORE, end);
                     }
                 }
@@ -209,10 +209,10 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
                 let mut w = latv_2.lock().unwrap();
                 w.push(t);
 
-                let core_id = job_id % setup_val;
+                let core_id = job_id % param.setup;
                 // we append a job to the job queue every *time_span*
                 let c = Arc::clone(&fak_conn);
-                append_job_faktory(pivot, c, core_id, &expr_num);
+                append_job_faktory(pivot, c, core_id, param.expr_num);
                 // println!("job: {}, core id: {}", job_id, core_id);
 
                 cur = Instant::now();
@@ -226,7 +226,7 @@ pub fn transcoder<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t2_1.lock().unwrap();
                 let end = Instant::now();
-                if inst {
+                if param.inst {
                     w.push(end);
                 }
             }

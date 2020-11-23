@@ -20,11 +20,13 @@ pub struct IPLookup {
     raw_entries: Vec<HashMap<u32, u16, FnvHash>>,
 }
 
-const TBL24_SIZE: usize = ((1 << 24) + 1);
+const TBL24_SIZE: usize = (1 << 24) + 1;
 const RAW_SIZE: usize = 33;
 const OVERFLOW_MASK: u16 = 0x8000;
+
 #[derive(Default, Clone)]
 struct Empty;
+
 impl Default for IPLookup {
     fn default() -> IPLookup {
         IPLookup {
@@ -286,11 +288,10 @@ pub fn lpm<T: 'static + Batch<Header = NullHeader, Metadata = EmptyMetadata>, S:
             },
             s,
         );
-    let pipeline = merge(vec![
+    merge(vec![
         groups.get_group(0).unwrap(),
         groups.get_group(1).unwrap(),
         groups.get_group(2).unwrap(),
     ])
-    .compose();
-    pipeline
+    .compose()
 }

@@ -106,10 +106,10 @@ pub fn bt_run_torrents_prev(_workload: &str, num_of_torrents: usize) -> Result<V
 }
 
 /// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents(_workload: &str, setup: String) -> Result<()> {
+pub fn bt_run_torrents(_workload: &str, setup: usize) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
-    argv.push(setup);
+    argv.push(setup.to_string());
     // argv.push("&".to_string());
 
     let _output = Command::new(&argv[0])
@@ -124,7 +124,7 @@ pub fn bt_run_torrents(_workload: &str, setup: String) -> Result<()> {
 pub fn bt_run_torrents_ng(_workload: &str, setup: String) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
-    argv.push(setup.to_string());
+    argv.push(setup);
 
     let output = Command::new(&argv[0])
         .args(&argv[1..])

@@ -18,7 +18,7 @@ use webpki_roots;
 pub struct CertificateNotExtractedError;
 
 /// Update a TLS flow entry by updating the entry with continuing TLS frame.
-pub fn tlsf_update(_flow: Flow, e: Entry<Flow, Vec<u8>>, payload: &[u8]) {
+pub fn tlsf_update(e: Entry<Flow, Vec<u8>>, payload: &[u8]) {
     e.and_modify(|e| {
         debug!("Before writing more bytes {:?}", e.len());
         e.extend(payload);
@@ -200,10 +200,11 @@ pub fn parse_tls_frame(buf: &[u8]) -> Result<Vec<rustls::Certificate>, Certifica
     certs
 }
 
-pub fn do_client_key_exchange(
+/// validate the extracted certificates with out of order segments
+#[allow(clippy::too_many_arguments)]
+pub fn unordered_validate(
     dns_name: webpki::DNSName,
     flow: &Flow,
-    rev_flow: &Flow,
     cert_count: &mut usize,
     unsafe_connection: &mut HashSet<Flow>,
     tmp_payload_cache: &mut HashMap<Flow, Vec<u8>>,
@@ -211,81 +212,43 @@ pub fn do_client_key_exchange(
     payload_cache: &mut HashMap<Flow, Vec<u8>>,
     seqnum_map: &mut HashMap<Flow, u32>,
 ) {
+    let rev_flow = flow.reverse_flow();
     // We need to retrieve the DNS name from the entry of the current flow, and
     // also parse the entry for the reverse flow.
-    if tmp_payload_cache.contains_key(&rev_flow) {
-        debug!("OOO: We have OOO segment for this connection");
-        // We have out-of-order segment for this TLS connection.
-        let (tmp_entry_seqnum, _) = tmp_seqnum_map.get(&rev_flow).unwrap();
-        if seqnum_map.get(&rev_flow).unwrap() == tmp_entry_seqnum {
-            debug!("OOO: We are ready to merge entries in two payload caches together!!!");
-            if payload_cache.contains_key(&rev_flow) && tmp_payload_cache.contains_key(&rev_flow) {
-                info!("1");
-                let (_, tmp_entry) = tmp_payload_cache.remove_entry(&rev_flow).unwrap();
-                info!("size of the tmp entry is {:?}", tmp_entry.len());
-                info!("2");
-                let _ = tmp_seqnum_map.remove_entry(&rev_flow);
-                let _ = seqnum_map.remove_entry(&rev_flow);
-                info!("3");
-                let (_, mut e) = payload_cache.remove_entry(&rev_flow).unwrap();
-                info!("size of the entry is {:?}", e.len());
-                info!("4");
-                e.extend(tmp_entry);
-                info!("size of the merged entry is {:?}", e.len());
-                info!("5");
-                let certs = parse_tls_frame(&e);
-                info!("info: We now retrieve the certs from the tcp payload");
-
-                match certs {
-                    Ok(chain) => {
-                        debug!("Testing our cert");
-                        let result = test_extracted_cert(chain, dns_name);
-                        *cert_count = *cert_count + 1;
-                        if *cert_count % 1_000 as usize == 0 {
-                            println!("cert count is {}k", *cert_count / 1_000);
-                        }
-                        if !result {
-                            debug!("info: Certificate validation failed, both flows' connection need to be reset\n{:?}\n{:?}\n", flow, rev_flow);
-                            unsafe_connection.insert(*flow);
-                            unsafe_connection.insert(*rev_flow);
-                        }
-                    }
-                    Err(e) => {
-                        debug!("ISSUE: match cert incurs error: {:?}\n", e);
-                    }
-                }
-            } else {
-                debug!("ISSUE: Oops, the payload cache doesn't have the entry for this flow");
-            }
-        } else {
-            debug!("ISSUE: Oops the expected seq# from our PLC entry doesn't match the seq# from the TPC entry");
-        }
-    } else {
-        info!("No out of order segment for this connection");
-        // Retrieve the payload cache and extract the cert.
-        if payload_cache.contains_key(&rev_flow) {
-            info!("1");
-            let (_, e) = payload_cache.remove_entry(&rev_flow).unwrap();
-            info!("2");
+    debug!("OOO: We have OOO segment for this connection");
+    // We have out-of-order segment for this TLS connection.
+    let (tmp_entry_seqnum, _) = tmp_seqnum_map.get(&rev_flow).unwrap();
+    if seqnum_map.get(&rev_flow).unwrap() == tmp_entry_seqnum {
+        debug!("OOO: We are ready to merge entries in two payload caches together!!!");
+        if payload_cache.contains_key(&rev_flow) && tmp_payload_cache.contains_key(&rev_flow) {
+            // info!("1");
+            let (_, tmp_entry) = tmp_payload_cache.remove_entry(&rev_flow).unwrap();
+            info!("size of the tmp entry is {:?}", tmp_entry.len());
+            // info!("2");
+            let _ = tmp_seqnum_map.remove_entry(&rev_flow);
             let _ = seqnum_map.remove_entry(&rev_flow);
-            info!("3");
+            // info!("3");
+            let (_, mut e) = payload_cache.remove_entry(&rev_flow).unwrap();
+            info!("size of the entry is {:?}", e.len());
+            // info!("4");
+            e.extend(tmp_entry);
+            info!("size of the merged entry is {:?}", e.len());
+            // info!("5");
             let certs = parse_tls_frame(&e);
             info!("info: We now retrieve the certs from the tcp payload");
-            info!("info: flow is {:?}", flow);
 
             match certs {
                 Ok(chain) => {
                     debug!("Testing our cert");
-                    let result = test_extracted_cert(chain, dns_name);
-
-                    *cert_count = *cert_count + 1;
-                    if *cert_count % 1_000 as usize == 0 {
+                    let result = try_extracted_cert(chain, dns_name);
+                    *cert_count += 1;
+                    if *cert_count % 1_000_usize == 0 {
                         println!("cert count is {}k", *cert_count / 1_000);
                     }
                     if !result {
                         debug!("info: Certificate validation failed, both flows' connection need to be reset\n{:?}\n{:?}\n", flow, rev_flow);
                         unsafe_connection.insert(*flow);
-                        unsafe_connection.insert(*rev_flow);
+                        unsafe_connection.insert(rev_flow);
                     }
                 }
                 Err(e) => {
@@ -295,5 +258,57 @@ pub fn do_client_key_exchange(
         } else {
             debug!("ISSUE: Oops, the payload cache doesn't have the entry for this flow");
         }
+    } else {
+        debug!("ISSUE: Oops the expected seq# from our PLC entry doesn't match the seq# from the TPC entry");
+    }
+}
+
+/// validate certificates without out of order segments
+pub fn ordered_validate(
+    dns_name: webpki::DNSName,
+    flow: &Flow,
+    cert_count: &mut usize,
+    unsafe_connection: &mut HashSet<Flow>,
+    payload_cache: &mut HashMap<Flow, Vec<u8>>,
+    seqnum_map: &mut HashMap<Flow, u32>,
+) {
+    let rev_flow = flow.reverse_flow();
+    info!("No out of order segment for this connection");
+    // Retrieve the payload cache and extract the cert.
+    if payload_cache.contains_key(&rev_flow) {
+        // info!("1");
+        let (_, e) = payload_cache.remove_entry(&rev_flow).unwrap();
+        // info!("2");
+        let _ = seqnum_map.remove_entry(&rev_flow);
+        // info!("3");
+        let certs = parse_tls_frame(&e);
+        info!("info: We now retrieve the certs from the tcp payload");
+        info!("info: flow is {:?}", flow);
+
+        match certs {
+            Ok(chain) => {
+                debug!("Testing our cert");
+                let result = try_extracted_cert(chain, dns_name);
+
+                *cert_count += 1;
+
+                if *cert_count % 1_000_usize == 0 {
+                    println!("cert count is {}k", *cert_count / 1_000);
+                }
+                if !result {
+                    debug!(
+                        "info: Certificate validation failed, both flows' connection need to be reset\n{:?}\n{:?}\n",
+                        flow, rev_flow
+                    );
+                    unsafe_connection.insert(*flow);
+                    unsafe_connection.insert(rev_flow);
+                }
+            }
+            Err(e) => {
+                debug!("ISSUE: match cert incurs error: {:?}\n", e);
+            }
+        }
+    } else {
+        debug!("ISSUE: Oops, the payload cache doesn't have the entry for this flow");
     }
 }

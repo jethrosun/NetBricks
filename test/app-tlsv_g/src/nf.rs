@@ -1,4 +1,4 @@
-use self::utils::{do_client_key_exchange, get_server_name, on_frame, tlsf_update};
+use self::utils::{get_server_name, on_frame, ordered_validate, tlsf_update, unordered_validate};
 use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::operators::{merge, Batch, CompositionBatch};
 use e2d2::pvn::measure::*;
@@ -137,10 +137,9 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                         // We received an expected packet
                         debug!("Pkt match expected seq #, update the flow entry...");
                         //debug!("{:?}", p.get_payload());
-                        tlsf_update(*flow, payload_cache.entry(*flow), &p.get_payload());
+                        tlsf_update(payload_cache.entry(*flow), &p.get_payload());
                         seqnum_map.entry(*flow).and_modify(|e| {
-                            *e = *e + _payload_size as u32;
-                            ()
+                            *e += _payload_size as u32;
                         });
                     } else if _seq > *seqnum_map.get(flow).unwrap() {
                         // We received a out-of-order TLS segment
@@ -152,9 +151,9 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                             let (_, entry_expected_seqno) = *tmp_seqnum_map.get(flow).unwrap();
                             if _seq == entry_expected_seqno {
                                 debug!("OOO: seq # of current pkt matches the expected seq # of the entry in tpc");
-                                tlsf_update(*flow, tmp_payload_cache.entry(*flow), &p.get_payload());
+                                tlsf_update(tmp_payload_cache.entry(*flow), &p.get_payload());
                                 tmp_seqnum_map.entry(*flow).and_modify(|(_, entry_expected_seqno)| {
-                                    *entry_expected_seqno = *entry_expected_seqno + _payload_size as u32;
+                                    *entry_expected_seqno += _payload_size as u32;
                                 });
                             } else {
                                 info!("Oops: passing because it should be a unrelated packet");
@@ -198,17 +197,29 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                                 ClientKeyExchange(_) => {
                                     let dns_name = name_cache.remove(&rev_flow);
                                     match dns_name {
-                                        Some(name) => do_client_key_exchange(
-                                            name,
-                                            flow,
-                                            &rev_flow,
-                                            &mut cert_count,
-                                            &mut unsafe_connection,
-                                            &mut tmp_payload_cache,
-                                            &mut tmp_seqnum_map,
-                                            &mut payload_cache,
-                                            &mut seqnum_map,
-                                        ),
+                                        Some(name) => {
+                                            if tmp_payload_cache.contains_key(&rev_flow) {
+                                                unordered_validate(
+                                                    name,
+                                                    &flow,
+                                                    &mut cert_count,
+                                                    &mut unsafe_connection,
+                                                    &mut tmp_payload_cache,
+                                                    &mut tmp_seqnum_map,
+                                                    &mut payload_cache,
+                                                    &mut seqnum_map,
+                                                )
+                                            } else {
+                                                ordered_validate(
+                                                    name,
+                                                    &flow,
+                                                    &mut cert_count,
+                                                    &mut unsafe_connection,
+                                                    &mut payload_cache,
+                                                    &mut seqnum_map,
+                                                )
+                                            }
+                                        }
                                         None => info!("We are missing the dns name from the client hello",),
                                     }
                                 }

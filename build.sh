@@ -332,6 +332,35 @@ case $TASK in
             fi
         done
         ;;
+	clippy)
+        deps
+
+        native
+
+        find_sctp
+
+        pushd $BASE_DIR/framework
+        if [ ${SCTP_PRESENT} -eq 1 ]; then
+            ${CARGO} clippy --release --features "sctp"
+        else
+            ${CARGO} clippy --release
+        fi
+        popd
+
+        for example in ${examples[@]}; do
+            if [[ ${example} == *sctp* ]]; then
+                if [ ${SCTP_PRESENT} -eq 1 ]; then
+                    pushd ${BASE_DIR}/${example}
+                    ${CARGO} clippy --release
+                    popd
+                fi
+            else
+                pushd ${BASE_DIR}/${example}
+                ${CARGO} clippy --release
+                popd
+            fi
+        done
+        ;;
 	miri)
         deps
 

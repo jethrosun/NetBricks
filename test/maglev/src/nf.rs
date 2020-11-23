@@ -16,7 +16,7 @@ type XxHashFactory = BuildHasherDefault<XxHash>;
 
 struct Maglev {
     // permutation: Box<Vec<Vec<usize>>>,
-    lut: Box<Vec<usize>>,
+    lut: Vec<usize>,
     lut_size: usize,
 }
 
@@ -44,7 +44,7 @@ impl Maglev {
             .collect()
     }
 
-    fn generate_lut(permutations: &Vec<Vec<usize>>, size: usize) -> Box<Vec<usize>> {
+    fn generate_lut(permutations: &[Vec<usize>], size: usize) -> Vec<usize> {
         let mut next: Vec<_> = permutations.iter().map(|_| 0).collect();
         let mut entry: Box<Vec<usize>> = box ((0..size).map(|_| 0x8000).collect());
         let mut n = 0;
@@ -67,7 +67,7 @@ impl Maglev {
             }
         }
         println!("Done Generating LUT");
-        entry
+        entry.to_vec()
     }
 
     pub fn new(name: &[&str], lsize: usize) -> Maglev {

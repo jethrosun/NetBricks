@@ -93,7 +93,7 @@ impl<T: Batch> Act for MergeBatch<T> {
         }
         // We need to eliminate duplicate tasks. Fortunately this is not called on the critical path so it is fine to do
         // it this way.
-        deps.sort();
+        deps.sort_unstable();
         deps.dedup();
         deps
     }

@@ -7,7 +7,7 @@ pub fn append_job_faktory(
     pivot: u128,
     faktory_conn: Arc<Mutex<faktory::Producer<TcpStream>>>,
     _core_id: usize,
-    expr_num: &str,
+    expr_num: usize,
 ) {
     let infile = "/home/jethros/dev/pvn/utils/data/tiny.y4m";
     let width_height = "360x24";
@@ -23,8 +23,8 @@ pub fn append_job_faktory(
         .unwrap()
         .enqueue(Job::new(
             // "app-xcdr_".to_owned() + &core_id.to_string() + "-" + expr_num,
-            "app-xcdr_".to_owned() + expr_num,
-            vec![infile.to_string(), outfile.to_string(), width_height.to_string()],
+            "app-xcdr_".to_owned() + &expr_num.to_string(),
+            vec![infile.to_string(), outfile, width_height.to_string()],
         ))
         .unwrap();
 }

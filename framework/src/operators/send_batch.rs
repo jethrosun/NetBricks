@@ -70,9 +70,9 @@ where
         self.parent
             .get_packet_batch()
             .send_q(&self.port)
-            .and_then(|x| {
+            .map(|x| {
                 self.sent += x as u64;
-                Ok(x)
+                x
             })
             .expect("Send failed");
         self.parent.done();

@@ -45,7 +45,7 @@ impl PacketBatch {
     #[inline]
     pub fn allocate_batch_with_size(&mut self, len: u16) -> Result<&mut Self> {
         let capacity = self.array.capacity() as i32;
-        self.alloc_packet_batch(len, capacity).and_then(|_| Ok(self))
+        self.alloc_packet_batch(len, capacity).map(|_| self)
     }
 
     /// Allocate `cnt` mbufs. `len` sets the metadata field indicating how much of the mbuf should be considred when
@@ -259,10 +259,10 @@ impl Act for PacketBatch {
         while self.available() > 0 {
             unsafe {
                 // let available = self.available() as i32;
-                port.send(self.packet_ptr()).and_then(|sent| {
+                port.send(self.packet_ptr()).map(|sent| {
                     self.consume_batch_partial(sent as usize);
                     total_sent += sent;
-                    Ok(sent)
+                    sent
                 })?;
             }
             break;

@@ -1120,5 +1120,5 @@ pub fn curate_unresolvable_records() -> HashSet<&'static str> {
     broken_urls.insert("cim.meebo.com");
     broken_urls.insert("biz5c.sandai.net");
 
-    return broken_urls;
+    broken_urls
 }

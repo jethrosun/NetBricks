@@ -124,16 +124,13 @@ fn main() {
                         pkts_so_far = pkts;
                     }
                 }
-                match duration {
-                    Some(d) => {
-                        let new_now = Instant::now();
-                        if new_now.duration_since(begining) > Duration::new(d as u64, 0) {
-                            println!("Have run for {:?}, system shutting down", d);
-                            context.shutdown();
-                            break;
-                        }
+                if let Some(d) = duration {
+                    let new_now = Instant::now();
+                    if new_now.duration_since(begining) > Duration::new(d as u64, 0) {
+                        println!("Have run for {:?}, system shutting down", d);
+                        context.shutdown();
+                        break;
                     }
-                    None => {}
                 }
             }
         }

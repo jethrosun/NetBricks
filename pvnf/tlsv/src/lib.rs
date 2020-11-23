@@ -13,7 +13,7 @@ extern crate webpki_roots;
 #[macro_use]
 extern crate log;
 
-use self::utils::{do_client_key_exchange, get_server_name, on_frame, tlsf_update};
+use self::utils::{get_server_name, on_frame, ordered_validate, tlsf_update, unordered_validate};
 use e2d2::allocators::CacheAligned;
 use e2d2::headers::{IpHeader, MacHeader, NullHeader, TcpHeader};
 use e2d2::interface::*;
@@ -22,13 +22,12 @@ use e2d2::pvn::measure::*;
 use e2d2::scheduler::Scheduler;
 use e2d2::utils::Flow;
 use rustls::internal::msgs::handshake::HandshakePayload::{ClientHello, ClientKeyExchange, ServerHello};
+use std::cmp::Ordering;
 use std::collections::{HashMap, HashSet};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 pub mod utils;
-
-const CONVERSION_FACTOR: f64 = 1_000_000_000.;
 
 /// Test for the validator network function to schedule pipelines.
 pub fn validator_test<S: Scheduler + Sized>(ports: Vec<CacheAligned<PortQueue>>, sched: &mut S) {
@@ -55,23 +54,22 @@ pub fn validator_test<S: Scheduler + Sized>(ports: Vec<CacheAligned<PortQueue>>,
     }
 }
 
-// pub fn validator<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
-//     parent: T,
-//     sched: &mut S,
-// ) -> CompositionBatch
+/// Network function that extracts certificates from sequence of packets and validate the
+/// certificates.
+///
+/// Several data structures are used here to have the TLS validator work. Core issues that we have
+/// to address are: 1. Handling reassembling packets in TCP. Note that it is a
+/// naive implementation of TCP out-of-order segments, for a more comprehensive version you
+/// should visit something like [assembler in
+/// smoltcp](https://github.com/m-labs/smoltcp/blob/master/src/storage/assembler.rs) and [ring
+/// buffer](https://github.com/m-labs/smoltcp/blob/master/src/storage/ring_buffer.rs#L238-L333). 2.
+/// Store packets that could be part of the TLS handshake (that we care about).
 pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> CompositionBatch {
-    let (_, _, inst, measure_time) = read_setup_param("/home/jethros/setup".to_string()).unwrap();
+    let param = read_setup_param("/home/jethros/setup".to_string()).unwrap();
     let mut metric_exec = true;
 
     // New payload cache.
-    //
-    // Here impl the new data structure for handling reassembling packets in TCP. Note that it is a
-    // naive implementation of TCP out-of-order segments, for a more comprehensive version you
-    // should visit something like [assembler in
-    // smoltcp](https://github.com/m-labs/smoltcp/blob/master/src/storage/assembler.rs) and [ring
-    // buffer](https://github.com/m-labs/smoltcp/blob/master/src/storage/ring_buffer.rs#L238-L333)
     let mut payload_cache = HashMap::<Flow, Vec<u8>>::with_hasher(Default::default());
-
     // Temporary payload cache.
     let mut tmp_payload_cache = HashMap::<Flow, Vec<u8>>::with_hasher(Default::default());
     // New map to keep track of the expected seq #
@@ -112,11 +110,10 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
             if pkt_count > NUM_TO_IGNORE {
                 let mut w = t1_1.lock().unwrap();
                 let start = Instant::now();
-                if inst {
+                if param.inst {
                     w.push(start);
                 }
             }
-
             p.get_mut_header();
         })
         .parse::<MacHeader>()
@@ -131,7 +128,6 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
         .parse::<TcpHeader>()
         .transform(box move |p| {
             let mut matched = false;
-
             let flow = p.read_metadata();
 
             if flow.proto == 6 {
@@ -140,65 +136,43 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
 
             if matched {
                 let rev_flow = flow.reverse_flow();
-                let _seq = p.get_header().seq_num();
-                let _tcph = p.get_header();
-                let _payload_size = p.payload_size();
+                let seq = p.get_header().seq_num();
+                let payload_size = p.payload_size();
 
-                // FIXME: The else part should be written as a filter and it should exec before all these..
                 if !unsafe_connection.contains(&flow) {
-                    // eprintln!("DEBUE: matchit",);
-                    // check if the flow is recognized
                     if payload_cache.contains_key(&flow) {
-                        info!("Pkt #{} is Occupied!", _seq);
-                        info!("And the flow is: {:?}", flow);
-
                         // The rest of the TLS server hello handshake should be captured here.
-                        info!("There is nothing, that is why we should insert the packet!!!");
-                        debug!(
-                            "Pkt seq # is {}, the expected seq # is {} ",
-                            _seq,
-                            seqnum_map.get(&flow).unwrap()
-                        );
-                        // Check if this packet is not expected, ie, is a out of order segment.
-                        if _seq == *seqnum_map.get(&flow).unwrap() {
+                        match seq.cmp(seqnum_map.get(&flow).unwrap()) {
                             // We received an expected packet
-                            debug!("Pkt match expected seq #, update the flow entry...");
-                            //debug!("{:?}", p.get_payload());
-                            tlsf_update(*flow, payload_cache.entry(*flow), &p.get_payload());
-                            seqnum_map.entry(*flow).and_modify(|e| {
-                                *e = *e + _payload_size as u32;
-                                ()
-                            });
-                        } else if _seq > *seqnum_map.get(&flow).unwrap() {
-                            // We received a out-of-order TLS segment
-                            debug!("OOO: pkt seq # is larger then expected seq #\n");
-                            // We need to check if we should update the entry in the tmp payload cache
-                            if tmp_payload_cache.contains_key(&flow) {
-                                debug!("OOO: we already have entry in the tmp payload cache");
-                                // Check if we should update the entry in the tmp payload cache
-                                let (_, entry_expected_seqno) = *tmp_seqnum_map.get(&flow).unwrap();
-                                if _seq == entry_expected_seqno {
-                                    debug!("OOO: seq # of current pkt matches the expected seq # of the entry in tpc");
-                                    tlsf_update(*flow, tmp_payload_cache.entry(*flow), &p.get_payload());
-                                    tmp_seqnum_map.entry(*flow).and_modify(|(_, entry_expected_seqno)| {
-                                        *entry_expected_seqno = *entry_expected_seqno + _payload_size as u32;
-                                    });
-                                } else {
-                                    info!("Oops: passing because it should be a unrelated packet");
-                                }
-                            } else {
-                                debug!("OOO: We are adding an entry in the tpc!");
-                                tmp_seqnum_map.insert(*flow, (_seq, _seq + _payload_size as u32));
-                                tmp_payload_cache.insert(*flow, p.get_payload().to_vec());
+                            Ordering::Equal => {
+                                tlsf_update(payload_cache.entry(*flow), &p.get_payload());
+                                seqnum_map.entry(*flow).and_modify(|e| {
+                                    *e += payload_size as u32;
+                                });
                             }
-                        } else {
-                            debug!("Oops: pkt seq # is even smaller then the expected #");
+                            // We received a out-of-order TLS segment
+                            Ordering::Greater => {
+                                // We need to check if we should update the entry in the tmp payload cache
+                                if tmp_payload_cache.contains_key(&flow) {
+                                    // Check if we should update the entry in the tmp payload cache
+                                    let (_, entry_expected_seqno) = *tmp_seqnum_map.get(&flow).unwrap();
+                                    if seq == entry_expected_seqno {
+                                        tlsf_update(tmp_payload_cache.entry(*flow), &p.get_payload());
+                                        tmp_seqnum_map.entry(*flow).and_modify(|(_, entry_expected_seqno)| {
+                                            *entry_expected_seqno += payload_size as u32;
+                                        });
+                                    }
+                                } else {
+                                    tmp_seqnum_map.insert(*flow, (seq, seq + payload_size as u32));
+                                    tmp_payload_cache.insert(*flow, p.get_payload().to_vec());
+                                }
+                            }
+                            Ordering::Less => {
+                                debug!("Oops: pkt seq # is even smaller then the expected #");
+                                // I think we need to remove the unrelated packets
+                            }
                         }
                     } else {
-                        // eprintln!("DEBUE: not matchit",);
-                        info!("Pkt #{} is Vacant", _seq);
-                        info!("And the flow is: {:?}", flow);
-
                         match on_frame(&p.get_payload()) {
                             Some((handshake, _)) => {
                                 match handshake.payload {
@@ -218,26 +192,33 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
                                             .or_insert(server_name);
                                     }
                                     ServerHello(_) => {
-                                        // capture the sequence number
-                                        debug!("Got ServerHello, insert the flow entry");
-                                        seqnum_map.insert(*flow, _seq + _payload_size as u32);
+                                        seqnum_map.insert(*flow, seq + payload_size as u32);
                                         payload_cache.insert(*flow, p.get_payload().to_vec());
                                     }
                                     ClientKeyExchange(_) => {
                                         let dns_name = name_cache.remove(&rev_flow);
-                                        match dns_name {
-                                            Some(name) => do_client_key_exchange(
-                                                name,
-                                                &flow,
-                                                &rev_flow,
-                                                &mut cert_count,
-                                                &mut unsafe_connection,
-                                                &mut tmp_payload_cache,
-                                                &mut tmp_seqnum_map,
-                                                &mut payload_cache,
-                                                &mut seqnum_map,
-                                            ),
-                                            None => info!("We are missing the dns name from the client hello",),
+                                        if let Some(name) = dns_name {
+                                            if tmp_payload_cache.contains_key(&rev_flow) {
+                                                unordered_validate(
+                                                    name,
+                                                    &flow,
+                                                    &mut cert_count,
+                                                    &mut unsafe_connection,
+                                                    &mut tmp_payload_cache,
+                                                    &mut tmp_seqnum_map,
+                                                    &mut payload_cache,
+                                                    &mut seqnum_map,
+                                                )
+                                            } else {
+                                                ordered_validate(
+                                                    name,
+                                                    &flow,
+                                                    &mut cert_count,
+                                                    &mut unsafe_connection,
+                                                    &mut payload_cache,
+                                                    &mut seqnum_map,
+                                                )
+                                            }
                                         }
                                     }
                                     _ => info!("Other kinds of payload",),
@@ -245,7 +226,6 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
                             }
                             None => info!("Get none for matching payload",),
                         }
-                        // eprintln!("DEBUG: Match on_frame done");
                     }
                 } else {
                     // Disabled for now, we can enable it when we are finished.
@@ -259,16 +239,14 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
 
                 if pkt_count > NUM_TO_IGNORE {
                     let end = Instant::now();
-                    if inst {
+                    if param.inst {
                         stop_ts_tcp.push(end);
                     }
                 }
-            } else {
-                if pkt_count > NUM_TO_IGNORE {
-                    let mut w = t2_1.lock().unwrap();
-                    if inst {
-                        w.insert(pkt_count - NUM_TO_IGNORE, Instant::now());
-                    }
+            } else if pkt_count > NUM_TO_IGNORE {
+                let mut w = t2_1.lock().unwrap();
+                if param.inst {
+                    w.insert(pkt_count - NUM_TO_IGNORE, Instant::now());
                 }
             }
 
@@ -282,10 +260,10 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
                 );
             }
 
-            if now.elapsed().as_secs() >= measure_time && metric_exec == true {
+            if now.elapsed().as_secs() >= param.expr_time && metric_exec {
                 println!("pkt count {:?}", pkt_count);
                 // let mut total_duration = Duration::new(0, 0);
-                let _total_time1 = Duration::new(0, 0);
+                let total_time1 = Duration::new(0, 0);
                 let w1 = t1_2.lock().unwrap();
                 let w2 = t2_2.lock().unwrap();
                 println!(
@@ -307,8 +285,6 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
                 for i in 0..num {
                     let stop = actual_stop_ts.get(&i).unwrap();
                     let since_the_epoch = stop.checked_duration_since(w1[i]).unwrap();
-                    // print!("{:?}, ", since_the_epoch1);
-                    // total_time1 = total_time1 + since_the_epoch1;
                     tmp_results.push(since_the_epoch.as_nanos());
                 }
                 compute_stat(tmp_results);
