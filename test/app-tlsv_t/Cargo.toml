@@ -13,7 +13,7 @@ rand = "0.6.0"
 fnv = "*"
 twox-hash = "*"
 # rustls = { git = "https://github.com/jethrosun/rustls", branch = "pvn-0.15.2", features = ["dangerous_configuration"] }
-rustls = { version = "0.17", features = ["dangerous_configuration"] }
+rustls = { version = "0.19", features = ["dangerous_configuration"] }
 webpki = "*"
 webpki-roots = "*"
 log = "0.4"

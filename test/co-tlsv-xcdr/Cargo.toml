@@ -9,7 +9,7 @@ e2d2 = { path = "../../framework", features = ["performance"] }
 tlsv = { path = "../../pvnf/tlsv" }
 xcdr = { path = "../../pvnf/xcdr" }
 time = "0.2.22"
-rustls = { version = "0.18.1", features = ["dangerous_configuration"] }
+rustls = { version = "0.19.0", features = ["dangerous_configuration"] }
 webpki = "*"
 webpki-roots = "*"
 faktory = "0.11"
