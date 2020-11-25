@@ -19,7 +19,7 @@ crossbeam = "0.7.3"
 transmission-rpc = "0.2.3"
 tokio = { version = "0.2", features = ["macros"] }
 dotenv = "0.15.0"
-env_logger = "0.7.1"
+env_logger = "0.8.2"
 futures = "0.3"
 
 [features]
