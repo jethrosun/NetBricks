@@ -7,8 +7,8 @@ use std::collections::HashMap;
 use std::convert::From;
 use std::hash::BuildHasherDefault;
 use std::net::Ipv4Addr;
-use std::sync::{Arc, Mutex, RwLock};
-use std::time::{Duration, Instant};
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 use fnv::FnvHasher;
 type FnvHash = BuildHasherDefault<FnvHasher>;
@@ -257,7 +257,7 @@ pub fn lpm<T: 'static + Batch<Header = NullHeader, Metadata = EmptyMetadata>, S:
                     stop_ts.push(now);
 
                     println!("\npkt count {:?}", pkt_count);
-                    let mut total_time = Duration::new(0, 0);
+                    // let mut total_time = Duration::new(0, 0);
                     let start = start2.lock().unwrap();
                     println!("# of start ts: {:?}, # of stop ts: {:?}", start.len(), stop_ts.len());
                     // assert_ge!(w.len(), stop_ts.len());

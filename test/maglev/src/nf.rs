@@ -7,7 +7,7 @@ use fnv::FnvHasher;
 use std::collections::HashMap;
 use std::hash::BuildHasherDefault;
 use std::hash::{BuildHasher, Hash, Hasher};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use twox_hash::XxHash;
 
@@ -136,7 +136,7 @@ pub fn maglev<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                     stop_ts.push(now);
 
                     println!("\npkt count {:?}", pkt_count);
-                    let mut total_time = Duration::new(0, 0);
+                    // let mut total_time = Duration::new(0, 0);
                     let start = start2.lock().unwrap();
                     println!("# of start ts: {:?}, # of stop ts: {:?}", start.len(), stop_ts.len());
                     // assert_ge!(w.len(), stop_ts.len());

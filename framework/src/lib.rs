@@ -33,7 +33,7 @@ extern crate error_chain;
 // extern crate sctp;
 
 // extern crate byteorder;
-extern crate getopts;
+// extern crate getopts;
 // extern crate fnv;
 // extern crate libc;
 // extern crate net2;

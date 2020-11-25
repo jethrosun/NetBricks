@@ -5,8 +5,8 @@ use e2d2::utils::{Flow, Ipv4Prefix};
 use fnv::FnvHasher;
 use std::collections::HashSet;
 use std::hash::BuildHasherDefault;
-use std::sync::{Arc, Mutex, RwLock};
-use std::time::{Duration, Instant};
+use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 type FnvHash = BuildHasherDefault<FnvHasher>;
 

@@ -28,7 +28,7 @@ pub fn get_server_name(buf: &[u8]) -> Option<webpki::DNSName> {
     match on_frame(&buf) {
         Some((handshake, _)) => match handshake.payload {
             ClientHello(x) => {
-                let mut iterator = x.extensions.iter();
+                let iterator = x.extensions.iter();
                 let mut result = None;
                 for val in iterator {
                     if ClientExtension::get_type(val) == ExtensionType::ServerName {
