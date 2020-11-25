@@ -17,7 +17,7 @@ failure = "*"
 rustc-serialize = "*"
 serde_json = "*"
 y4m = "0.7"
-resize = "0.3"
+resize = "0.5"
 crossbeam = "0.8.0"
 faktory = "0.11"
 
