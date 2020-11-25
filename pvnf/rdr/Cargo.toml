@@ -9,7 +9,7 @@ e2d2 = { path = "../../framework", features = ["performance"] }
 time = "0.1.42"
 getopts = "*"
 failure = "*"
-tiny_http = "0.6"
+tiny_http = "0.7"
 rshttp = { git = "https://github.com/jethrosun/http", branch = "pvn" }
 headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
 # headless_chrome = "0.9"
