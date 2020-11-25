@@ -13,7 +13,7 @@ tiny_http = "0.6"
 rshttp = { git = "https://github.com/jethrosun/http", branch = "pvn" }
 rustc-serialize = "*"
 serde_json = "*"
-sha1 = "0.2.0"
+sha1 = "0.6.0"
 hyper = "0.10"
 crossbeam = "0.7.3"
 transmission-rpc = "0.2.3"
