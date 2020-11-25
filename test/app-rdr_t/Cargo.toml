@@ -8,7 +8,7 @@ edition = "2018"
 e2d2 = { path = "../../framework", features = ["performance"] }
 rdr = { path = "../../pvnf/rdr" }
 
-time = "0.1.42"
+time = "0.2.23"
 getopts = "*"
 fnv = "*"
 twox-hash = "*"

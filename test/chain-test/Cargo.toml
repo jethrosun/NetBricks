@@ -5,7 +5,7 @@ authors = ["Aurojit Panda <apanda@cs.berkeley.edu>", "Jethro Shuwen Sun <jethros
 
 [dependencies]
 e2d2 = { path = "../../framework", features = ["performance"] }
-time = "0.1.42"
+time = "0.2.23"
 getopts = "*"
 rand = ">=0.3"
 fnv = "*"
