@@ -14,7 +14,7 @@ rshttp = { git = "https://github.com/jethrosun/http", branch = "pvn" }
 rustc-serialize = "*"
 serde_json = "*"
 sha1 = "0.6.0"
-hyper = "0.10"
+hyper = "0.13"
 crossbeam = "0.8.0"
 transmission-rpc = "0.2.3"
 tokio = { version = "0.3", features = ["macros"] }
