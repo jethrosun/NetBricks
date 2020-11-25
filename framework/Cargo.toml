@@ -24,7 +24,6 @@ nix = "*"
 rust-sctp = { git="https://github.com/netsys/rust-sctp", optional = true}
 toml = "*"
 # Hack for SHM
-uuid= { version = "*", features=["v4"] }
 error-chain = "*"
 clippy = { version = "*", optional = true }
 statrs = "0.12"
