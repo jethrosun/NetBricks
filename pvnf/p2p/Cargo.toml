@@ -17,7 +17,7 @@ sha1 = "0.6.0"
 hyper = "0.10"
 crossbeam = "0.8.0"
 transmission-rpc = "0.2.3"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "0.3", features = ["macros"] }
 dotenv = "0.15.0"
 env_logger = "0.8.2"
 futures = "0.3"

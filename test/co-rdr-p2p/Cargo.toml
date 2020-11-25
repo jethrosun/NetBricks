@@ -10,7 +10,7 @@ rdr = { path = "../../pvnf/rdr" }
 p2p = { path = "../../pvnf/p2p" }
 time = "0.2.22"
 headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "0.3", features = ["macros"] }
 
 [features]
 default = []
