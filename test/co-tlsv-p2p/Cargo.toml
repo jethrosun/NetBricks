@@ -9,7 +9,7 @@ e2d2 = { path = "../../framework", features = ["performance"] }
 tlsv = { path = "../../pvnf/tlsv" }
 p2p = { path = "../../pvnf/p2p" }
 time = "0.2.22"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "0.3", features = ["macros"] }
 webpki = "*"
 webpki-roots = "*"
 rustls = { version = "0.19.0", features = ["dangerous_configuration"] }
