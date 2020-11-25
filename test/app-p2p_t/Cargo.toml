@@ -14,7 +14,7 @@ rand = ">=0.3"
 fnv = "*"
 rustc-serialize = "*"
 serde_json = "*"
-crossbeam = "0.7.3"
+crossbeam = "0.8.0"
 transmission-rpc = "0.2.3"
 tokio = { version = "0.2", features = ["macros"] }
 dotenv = "0.15.0"
