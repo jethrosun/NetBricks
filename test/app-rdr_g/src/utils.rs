@@ -41,6 +41,8 @@ pub fn simple_user_browse(current_browser: &Browser, hostname: &String, user: &i
 }
 
 /// RDR proxy browsing scheduler.
+#[allow(non_snake_case)]
+#[allow(unreachable_patterns)]
 pub fn rdr_scheduler_ng(
     pivot: &usize,
     rdr_users: &Vec<i64>,

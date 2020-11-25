@@ -41,6 +41,8 @@ pub fn simple_user_browse(current_browser: &Browser, hostname: &str, _user: &i64
 }
 
 /// RDR proxy browsing scheduler.
+#[allow(non_snake_case)]
+#[allow(unreachable_patterns)]
 pub fn rdr_scheduler_ng(
     _pivot: &usize,
     rdr_users: &[i64],
@@ -81,7 +83,6 @@ pub fn rdr_scheduler_ng(
                     _ => println!("Error: unknown user browsing error type"),
                 },
                 Err(e) => match e {
-                    // FIXME: match everything???
                     ConnectionClosed => {
                         num_of_closed += 1;
                         num_of_visit += 1;
