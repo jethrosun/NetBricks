@@ -193,7 +193,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                         let p2p_torrents = p2p_read_rand_seed(num_of_torrents, param.iter.to_string()).unwrap();
                         let workload = p2p_load_json(fp_workload.to_string(), p2p_torrents);
 
-                        let rt = Runtime::new().unwrap();
+                        let mut rt = Runtime::new().unwrap();
                         match rt.block_on(add_all_torrents(num_of_torrents, workload, torrents_dir.to_string())) {
                             Ok(_) => println!("Add torrents success"),
                             Err(e) => println!("Add torrents failed with {:?}", e),
