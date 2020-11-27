@@ -101,6 +101,7 @@ pub fn bt_run_torrents(workload: Vec<usize>) -> Result<()> {
     for img in workload {
         argv.push(img.to_string())
     }
+    println!("argv {:?}", argv);
 
     let output = Command::new(&argv[0])
         .args(&argv[1..])
