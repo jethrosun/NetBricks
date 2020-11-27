@@ -185,14 +185,14 @@ pub fn p2p_load_json(fp_workload: String, _p2p_torrents: Vec<i64>) -> Vec<String
 }
 
 /// Retrieve the p2p random seed from rand_seed file.
-pub fn p2p_read_rand_seed(num_of_torrents: usize, iter: String) -> Result<Vec<i64>> {
+pub fn p2p_read_rand_seed(num_of_torrents: usize, iter: String, p2p_type: String) -> Result<Vec<i64>> {
     println!("num_of_torrents: {:?}, iter: {:?}", num_of_torrents, iter);
     let rand_seed_file = "/home/jethros/dev/pvn/utils/rand_number/rand.json";
     let mut rand_vec = Vec::new();
     let file = File::open(rand_seed_file).expect("rand seed file should open read only");
     let json_data: Value = from_reader(file).expect("file should be proper JSON");
 
-    match json_data.get("p2p") {
+    match json_data.get(p2p_type) {
         Some(p2p_data) => match p2p_data.get(&num_of_torrents.clone().to_string()) {
             Some(setup_data) => match setup_data.get(iter.clone()) {
                 Some(data) => {

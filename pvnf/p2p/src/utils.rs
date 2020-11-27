@@ -79,57 +79,16 @@ pub async fn run_all_torrents() -> Result<()> {
 }
 
 /// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents_prev(_workload: &str, num_of_torrents: usize) -> Result<Vec<std::process::Child>> {
-    let mut bt_process = Vec::new();
-    for i in 1..(num_of_torrents + 1) {
-        let mut argv = Vec::new();
-        argv.push("deluge-console".to_string());
-        argv.push("-c".to_string());
-        argv.push("/home/jethros/bt_data/config".to_string());
-
-        let s = "add /home/jethros/dev/pvn/utils/workloads/torrent_files/p2p_image_".to_owned()
-            + &i.to_string()
-            + ".img.torrent";
-        argv.push(s);
-
-        let child = std::process::Command::new(&argv[0])
-            .args(&argv[1..])
-            .spawn()
-            .expect("failed to start subprocess");
-        bt_process.push(child);
-    }
-
-    Ok(bt_process)
-}
-
-/// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents(_workload: &str, setup: usize) -> Result<()> {
+pub fn bt_run_torrents(workload: &str, setup: usize) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
     argv.push(setup.to_string());
     // argv.push("&".to_string());
 
-    let _output = Command::new(&argv[0])
+    let output = Command::new(&argv[0])
         .args(&argv[1..])
         .spawn()
         .expect("failed to execute process");
 
-    Ok(())
-}
-
-/// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents_ng(_workload: &str, setup: String) -> Result<()> {
-    let mut argv = Vec::new();
-    argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
-    argv.push(setup);
-
-    let output = Command::new(&argv[0])
-        .args(&argv[1..])
-        .output()
-        .expect("failed to execute process");
-
-    println!("status: {}", output.status);
-    io::stdout().write_all(&output.stdout).unwrap();
-    io::stderr().write_all(&output.stderr).unwrap();
     Ok(())
 }
