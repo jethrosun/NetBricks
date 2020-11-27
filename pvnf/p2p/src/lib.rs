@@ -111,13 +111,11 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                 let match_ip = 180_907_852 as u32;
                 // https://wiki.wireshark.org/BitTorrent
                 let match_port = vec![6882, 6883, 6884, 6885, 6886, 6887, 6888, 6889, 6969];
-                println!("flow: {:?}", f);
 
                 if f.proto == 6
-                    && ((f.src_ip == match_ip && match_port.contains(&f.dst_port))
-                        || (f.dst_ip == match_ip && match_port.contains(&f.src_port)))
+                    && ((f.src_ip == match_ip && match_port.contains(&f.src_port))
+                        || (f.dst_ip == match_ip && match_port.contains(&f.dst_port)))
                 {
-                    println!("match");
                     matched = true
                 }
 
