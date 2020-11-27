@@ -156,7 +156,8 @@ jobs:
     displayName: 'Configure the hugepage for DPDK'
   - script: |
       llvm-config --version
-    displayName: 'Check llvm version'
+      gcc --version
+    displayName: 'Check llvm and gcc version'
   - script: |
       ./build.sh
     displayName: 'Build NetBricks'
