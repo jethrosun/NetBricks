@@ -41,9 +41,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
 ) -> CompositionBatch {
     // setup for this run
     let param = read_setup_param("/home/jethros/setup".to_string()).unwrap();
-    let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string());
-    println!("DEBUG: {:?}", num_of_torrents);
-    let num_of_torrents = num_of_torrents.unwrap();
+    let num_of_torrents = p2p_retrieve_param("/home/jethros/setup".to_string()).unwrap();
     let p2p_type = p2p_read_type("/home/jethros/setup".to_string()).unwrap();
 
     // Measurement code

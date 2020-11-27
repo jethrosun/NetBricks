@@ -23,32 +23,32 @@ pub fn p2p_retrieve_param(fp_setup: String) -> Option<usize> {
     match &*p2p_type {
         // FIXME: nothing get matched???
         "app_p2p-controlled" => {
-            map.insert("1", 1);
-            map.insert("2", 2);
-            map.insert("3", 4);
-            map.insert("4", 6);
-            map.insert("5", 8);
-            map.insert("6", 10);
+            map.insert(1, 1);
+            map.insert(2, 2);
+            map.insert(3, 4);
+            map.insert(4, 6);
+            map.insert(5, 8);
+            map.insert(6, 10);
         }
         "app_p2p" => {
-            map.insert("1", 1);
-            map.insert("2", 10);
-            map.insert("3", 50);
-            map.insert("4", 100);
-            map.insert("5", 150);
-            map.insert("6", 200);
+            map.insert(1, 1);
+            map.insert(2, 10);
+            map.insert(3, 50);
+            map.insert(4, 100);
+            map.insert(5, 150);
+            map.insert(6, 200);
         }
         "app_p2p-ext" => {
-            map.insert("11", 1);
-            map.insert("12", 1);
-            map.insert("13", 1);
-            map.insert("14", 1);
-            map.insert("15", 1);
-            map.insert("16", 1);
-            map.insert("17", 1);
-            map.insert("18", 1);
-            map.insert("19", 1);
-            map.insert("20", 1);
+            map.insert(11, 1);
+            map.insert(12, 1);
+            map.insert(13, 1);
+            map.insert(14, 1);
+            map.insert(15, 1);
+            map.insert(16, 1);
+            map.insert(17, 1);
+            map.insert(18, 1);
+            map.insert(19, 1);
+            map.insert(20, 1);
         }
         //
         _ => {
