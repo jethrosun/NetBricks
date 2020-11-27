@@ -98,7 +98,9 @@ pub fn bt_run_torrents(workload: Vec<usize>) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
     argv.push(workload.len().to_string());
+    println!("workload {:?}", workload);
     for img in workload {
+        println!("img {:?}", img);
         argv.push(img.to_string())
     }
     println!("argv {:?}", argv);
