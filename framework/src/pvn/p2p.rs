@@ -23,7 +23,6 @@ pub fn p2p_retrieve_param(fp_setup: String) -> Option<usize> {
     match &*p2p_type {
         // FIXME: nothing get matched???
         "app_p2p-controlled" => {
-            println!("\tparam: got controlled");
             map.insert("1", 1);
             map.insert("2", 2);
             map.insert("3", 4);
@@ -65,7 +64,7 @@ pub fn p2p_retrieve_param(fp_setup: String) -> Option<usize> {
             // map.insert("6", 10);
         }
     }
-    map.remove(&*p2p_type)
+    map.remove(&param.setup)
 }
 
 /// Retrieve the p2p type param in the pvn setup config file.
