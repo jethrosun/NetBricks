@@ -115,6 +115,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                 if f.proto == 6 && (f.src_ip == match_ip && match_port.contains(&f.dst_port))
                     || (f.dst_ip == match_ip && match_port.contains(&f.src_port))
                 {
+                    println!("match");
                     matched = true
                 }
 
