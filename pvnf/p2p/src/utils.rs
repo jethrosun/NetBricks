@@ -79,11 +79,28 @@ pub async fn run_all_torrents() -> Result<()> {
 }
 
 /// Run BitTorrent jobs via deluge console
-pub fn bt_run_torrents(workload: &str, setup: usize) -> Result<()> {
+pub fn bt_run_torrents_bak(workload: &str, setup: usize) -> Result<()> {
     let mut argv = Vec::new();
     argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
     argv.push(setup.to_string());
     // argv.push("&".to_string());
+
+    let output = Command::new(&argv[0])
+        .args(&argv[1..])
+        .spawn()
+        .expect("failed to execute process");
+
+    Ok(())
+}
+
+/// Run BitTorrent jobs via deluge console
+pub fn bt_run_torrents(workload: Vec<usize>) -> Result<()> {
+    let mut argv = Vec::new();
+    argv.push("/home/jethros/dev/pvn/utils/p2p_expr/p2p_run_nb.sh".to_string());
+    argv.push(workload.len().to_string());
+    for img in workload {
+        argv.push(img.to_string())
+    }
 
     let output = Command::new(&argv[0])
         .args(&argv[1..])
