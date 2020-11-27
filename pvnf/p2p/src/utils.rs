@@ -101,7 +101,7 @@ pub fn bt_run_torrents(workload: Vec<usize>) -> Result<()> {
     println!("workload {:?}", workload);
     for img in workload {
         println!("img {:?}", img);
-        argv.push(img.to_string())
+        argv.push(img.to_string());
     }
     println!("argv {:?}", argv);
 
