@@ -183,7 +183,7 @@ pub fn p2p<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Sized>(
                         let p2p_torrents =
                             p2p_read_rand_seed(num_of_torrents, param.iter.to_string(), "p2p_controlled".to_string())
                                 .unwrap();
-                        println!("p2p torrents: {}", p2p_torrents);
+                        println!("p2p torrents: {:?}", p2p_torrents);
 
                         let _ = bt_run_torrents(fp_workload, param.setup);
 
