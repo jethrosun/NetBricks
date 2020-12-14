@@ -131,9 +131,9 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 let rdr_match_port = 443_u16;
 
                 let xcdr_match_src_ip = 3_232_235_524_u32;
-                let xcdr_match_src_port = 58_111;
+                let xcdr_match_src_port = 443;
                 let xcdr_match_dst_ip = 2_457_012_302_u32;
-                let xcdr_match_dst_port = 443;
+                let xcdr_match_dst_port = 58_111;
 
                 // Match RDR packets to group 1 and XCDR packets to group 2, the rest to group 0
                 if f.proto == 6
