@@ -230,6 +230,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 );
                 println!("Metric: Browsing Time: {:?}\n", elapsed_time);
                 metric_exec = false;
+
                 // Measurement: metric for the performance of the XCDR
                 println!("Pivot/span: {:?}", pivot / time_span);
                 let w = latv_1.lock().unwrap();
