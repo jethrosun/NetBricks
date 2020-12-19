@@ -135,6 +135,11 @@ pub fn xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 }
 
                 if now.elapsed().as_secs() >= xcdr_param.expr_time && latency_exec {
+                    // perf XCDR
+                    println!("Pivot/span: {:?}", pivot / time_span);
+                    let w = latv_1.lock().unwrap();
+                    println!("Metric: {:?}", w);
+
                     println!("pkt count {:?}", pkt_count);
                     let w1 = t1_2.lock().unwrap();
                     let w2 = t2_2.lock().unwrap();

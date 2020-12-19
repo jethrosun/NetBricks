@@ -154,6 +154,7 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                     matched = 2
                 }
 
+                // this is currently disabled for coexist instances
                 if now.elapsed().as_secs() >= rdr_param.expr_time && latency_exec {
                     println!("pkt count {:?}", pkt_count);
                     let w1 = t1_2.lock().unwrap();
@@ -229,6 +230,11 @@ pub fn rdr_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                 );
                 println!("Metric: Browsing Time: {:?}\n", elapsed_time);
                 metric_exec = false;
+                // Measurement: metric for the performance of the XCDR
+                println!("Pivot/span: {:?}", pivot / time_span);
+                let w = latv_1.lock().unwrap();
+                println!("Metric: {:?}", w);
+
             }
 
             // Measurement: instrumentation to collect latency metrics
