@@ -220,10 +220,10 @@ pub fn validator<T: 'static + Batch<Header = NullHeader>>(parent: T) -> Composit
                                             }
                                         }
                                     }
-                                    _ => info!("Other kinds of payload",),
+                                    _ => {} //info!("Other kinds of payload",),
                                 }
                             }
-                            None => info!("Get none for matching payload",),
+                            None => {} //info!("Get none for matching payload",),
                         }
                     }
                 } else {

@@ -248,13 +248,13 @@ pub fn tlsv_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler + Siz
                                                 )
                                             }
                                         }
-                                        None => eprintln!("We are missing the dns name from the client hello",),
+                                        None => {} // eprintln!("We are missing the dns name from the client hello",),
                                     }
                                 }
-                                _ => eprintln!("Other kinds of payload",),
+                                _ => {} //eprintln!("Other kinds of payload",),
                             }
                         }
-                        None => eprintln!("Get none for matching payload",),
+                        None => {} //eprintln!("Get none for matching payload",),
                     }
                 }
             } else {
