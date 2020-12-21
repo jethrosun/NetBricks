@@ -6,7 +6,7 @@ authors = ['Shuwen "Jethro" Sun <jethrosun@ccs.neu.edu']
 [dependencies]
 e2d2 = { path = "../../framework", features = ["performance"] }
 time = "0.2"
-rand = "0.7.3"
+rand = "0.8.0"
 fnv = "*"
 twox-hash = "*"
 rustls = { version = "0.19", features = ["dangerous_configuration"] }

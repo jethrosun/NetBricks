@@ -8,7 +8,7 @@ edition = "2018"
 e2d2 = { path = "../../framework", features = ["performance"] }
 p2p = { path = "../../pvnf/p2p" }
 time = "0.2"
-rand = "0.7.3"
+rand = "0.8.0"
 fnv = "*"
 rustc-serialize = "*"
 serde_json = "*"
