@@ -9,7 +9,7 @@ e2d2 = { path = "../../framework", features = ["performance"] }
 xcdr = { path = "../../pvnf/xcdr" }
 p2p = { path = "../../pvnf/p2p" }
 time = "0.2"
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.0", features = ["macros"] }
 faktory = "0.11"
 
 [features]
