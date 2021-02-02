@@ -38,4 +38,4 @@ sctp = ["rust-sctp"]
 
 [build-dependencies]
 # Use Bindgen to generate DPDK structures.
-bindgen = "0.56"
+bindgen = "0.57"
