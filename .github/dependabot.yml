@@ -1,0 +1,20 @@
+version: 2
+updates:
+- package-ecosystem: cargo
+  directory: "/"
+  schedule:
+    interval: daily
+    time: "10:00"
+  open-pull-requests-limit: 10
+  target-branch: expr
+  ignore:
+  - dependency-name: transmission-rpc
+    versions:
+    - 0.3.2
+    - 0.3.3
+  - dependency-name: bindgen
+    versions:
+    - 0.57.0
+  - dependency-name: resize
+    versions:
+    - 0.6.1
