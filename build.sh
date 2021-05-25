@@ -24,7 +24,7 @@ fi
 TARGET_DIR="/home/jethros/data/cargo-target/release"
 
 # setup the DPDK version
-DPDK_VER=17.08
+DPDK_VER=20.11
 DPDK_HOME="${BASE_DIR}/3rdparty/dpdk"
 DPDK_LD_PATH="${DPDK_HOME}/build/lib"
 DPDK_CONFIG_FILE=${DPDK_CONFIG_FILE-"${EXT_BASE}/dpdk-confs/common_linuxapp-${DPDK_VER}"}
