@@ -26,7 +26,7 @@ toml = "*"
 # Hack for SHM
 error-chain = "*"
 clippy = { version = "*", optional = true }
-statrs = "0.13"
+statrs = "0.14"
 serde_json = "*"
 
 [features]
