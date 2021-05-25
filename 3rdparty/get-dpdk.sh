@@ -37,7 +37,9 @@ fi
 
 cp "${CONFIG_FILE}${CONFIG_PFX}" "${DPDK_RESULT}/config/common_linuxapp"
 export RTE_TARGET=x86_64-native-linuxapp-gcc
-FLAGS="-g3 -Wno-error=maybe-uninitialized -Wno-implicit-fallthrough -fPIC"
+# EXTRA_CFLAGS += $(CFLAGS_EXTRA) -fno-pie
+# FLAGS="-g3 -Wno-error=maybe-uninitialized -Wno-implicit-fallthrough -fPIC"
+FLAGS="-g3 -Wno-error=maybe-uninitialized -Wno-implicit-fallthrough"
 make config -C "${DPDK_RESULT}" T=x86_64-native-linuxapp-gcc \
 	EXTRA_CFLAGS="$FLAGS"
 PROCS="$(nproc)"
