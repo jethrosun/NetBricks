@@ -12,7 +12,7 @@ webpki = "0.21"
 webpki-roots = "0.21"
 rustls = { version = "0.19", features = ["dangerous_configuration"] }
 p2p = { path = "../../pvnf/p2p" }
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.8", features = ["macros"] }
 xcdr = { path = "../../pvnf/xcdr" }
 faktory = "0.11"
 

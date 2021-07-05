@@ -14,7 +14,7 @@ rustls = { version = "0.17", features = ["dangerous_configuration"] }
 rdr = { path = "../../pvnf/rdr" }
 headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
 p2p = { path = "../../pvnf/p2p" }
-tokio = { version = "0.2", features = ["macros"] }
+tokio = { version = "1.8", features = ["macros"] }
 
 [features]
 default = []
