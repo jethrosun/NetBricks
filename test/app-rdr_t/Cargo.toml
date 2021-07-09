@@ -12,7 +12,7 @@ fnv = "*"
 twox-hash = "*"
 log = "0.4"
 failure = "*"
-tiny_http = "0.7"
+tiny_http = "0.8"
 rshttp = { git = "https://github.com/jethrosun/http", branch = "pvn" }
 headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
 # headless_chrome = "0.9"
