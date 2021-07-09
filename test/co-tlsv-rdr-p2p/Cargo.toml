@@ -10,7 +10,7 @@ time = "0.2.22"
 tlsv = { path = "../../pvnf/tlsv" }
 webpki = "0.21"
 webpki-roots = "0.21"
-rustls = { version = "0.17", features = ["dangerous_configuration"] }
+rustls = { version = "0.19", features = ["dangerous_configuration"] }
 rdr = { path = "../../pvnf/rdr" }
 headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
 p2p = { path = "../../pvnf/p2p" }
