@@ -8,7 +8,7 @@ edition = "2018"
 e2d2 = { path = "../../framework", features = ["performance"] }
 time = "0.2.22"
 tlsv = { path = "../../pvnf/tlsv" }
-webpki = "0.21"
+webpki = "0.22"
 webpki-roots = "0.21"
 rustls = { version = "0.17", features = ["dangerous_configuration"] }
 rdr = { path = "../../pvnf/rdr" }
