@@ -9,7 +9,7 @@ e2d2 = { path = "../../framework", features = ["performance"] }
 time = "0.2.22"
 tlsv = { path = "../../pvnf/tlsv" }
 webpki = "0.21"
-webpki-roots = "0.21"
+webpki-roots = "0.22"
 rustls = { version = "0.19", features = ["dangerous_configuration"] }
 rdr = { path = "../../pvnf/rdr" }
 headless_chrome = { git = "https://github.com/jethrosun/rust-headless-chrome", branch = "pvn-0.9" }
