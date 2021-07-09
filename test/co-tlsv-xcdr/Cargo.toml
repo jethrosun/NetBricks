@@ -10,7 +10,7 @@ tlsv = { path = "../../pvnf/tlsv" }
 xcdr = { path = "../../pvnf/xcdr" }
 time = "0.2"
 rustls = { version = "0.19", features = ["dangerous_configuration"] }
-webpki = "0.21.0"
+webpki = "0.22.0"
 webpki-roots = "0.21.0"
 faktory = "0.11"
 
