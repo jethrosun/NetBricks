@@ -307,7 +307,7 @@ pub fn rdr_xcdr_p2p_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler +
         .compose();
 
     let p2p_pipe = groups
-        .get_group(2)
+        .get_group(3)
         .unwrap()
         .transform(box move |_| {
             if workload_exec {

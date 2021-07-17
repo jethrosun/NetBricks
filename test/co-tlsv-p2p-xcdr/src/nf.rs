@@ -389,7 +389,7 @@ pub fn tlsv_p2p_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Scheduler 
         .compose();
 
     let xcdr_pipe = groups
-        .get_group(2)
+        .get_group(3)
         .unwrap()
         .transform(box move |_| {
             // time difference

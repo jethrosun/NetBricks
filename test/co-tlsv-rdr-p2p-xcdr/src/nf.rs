@@ -142,7 +142,7 @@ pub fn tlsv_rdr_p2p_xcdr_test<T: 'static + Batch<Header = NullHeader>, S: Schedu
         })
         .parse::<TcpHeader>()
         .group_by(
-            3,
+            4,
             box move |p| {
                 pkt_count += 1;
                 let f = p.read_metadata().clone();
