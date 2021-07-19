@@ -196,6 +196,19 @@ pub fn p2p_fetch_workload(fp_setup: String) -> Option<String> {
         "chain_xcdr_p2p" => {
             return p2p_controlled_map.remove(&*setup.unwrap());
         }
+        // coresident
+        "co_tlsv_rdr_p2p" => {
+            return p2p_controlled_map.remove(&*setup.unwrap());
+        }
+        "co_tlsv_p2p_xcdr" => {
+            return p2p_controlled_map.remove(&*setup.unwrap());
+        }
+        "co_rdr_xcdr_p2p" => {
+            return p2p_controlled_map.remove(&*setup.unwrap());
+        }
+        "co_tlsv_rdr_p2p_xcdr" => {
+            return p2p_controlled_map.remove(&*setup.unwrap());
+        }
         &_ => {
             println!("\tP2P type: {:?}, unable to fetch workload", p2p_type.unwrap());
             return None;
